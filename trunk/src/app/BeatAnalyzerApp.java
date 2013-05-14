@@ -15,6 +15,7 @@ import processing.core.PApplet;
  * Beat Analyser Framework
  * 
  * @author Stefan Marks
+ * @version 1.0 - 15.05.2013: Created
  */
 public class BeatAnalyzerApp extends javax.swing.JFrame
 {
