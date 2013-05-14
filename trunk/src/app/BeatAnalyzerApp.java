@@ -9,6 +9,7 @@ import gui.WaveformRenderPanel;
 import ddf.minim.*;
 import java.io.File;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import processing.core.PApplet;
 
 /**
@@ -50,6 +51,9 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         openSoundFile(new File("data/Sweep.wav"));
     }
 
+    /**
+     * Opens the file selection dialog for reading a sound file.
+     */
     private void selectSoundFile()
     {
         JFileChooser jfc = new JFileChooser(".");
@@ -61,9 +65,28 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         }
     }
     
+    /**
+     * Starts reading and analysing a sound file.
+     * 
+     * @param file  the file to read and analyse
+     */
     private void openSoundFile(File file)
     {
         // close old file first?
+        closeSoundFile();
+        
+        sound = minim.loadFile(file.getAbsolutePath(), 1024);
+        analyser.attachToAudio(sound);
+        logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
+        logger.setEnabled(menuSettings_OutputData.isSelected());
+        playbackControl.attachToAudio(sound);
+    }
+    
+    /**
+     * Closes the active sound file.
+     */
+    private void closeSoundFile()
+    {
         if ( sound != null )
         {
             analyser.detachFromAudio(sound);
@@ -72,11 +95,6 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
             sound.close();
             sound = null;
         }
-        
-        sound = minim.loadFile(file.getAbsolutePath(), 1024);
-        analyser.attachToAudio(sound);
-        logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
-        playbackControl.attachToAudio(sound);
     }
     
     /**
@@ -97,6 +115,11 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu menuFile = new javax.swing.JMenu();
         javax.swing.JMenuItem menuFileOpen = new javax.swing.JMenuItem();
+        javax.swing.JMenuItem menuFileQuit = new javax.swing.JMenuItem();
+        javax.swing.JMenu menuSettings = new javax.swing.JMenu();
+        menuSettings_OutputData = new javax.swing.JCheckBoxMenuItem();
+        javax.swing.JMenu menuHelp = new javax.swing.JMenu();
+        javax.swing.JMenuItem menuHelpAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Beat Analyser v1.0");
@@ -146,6 +169,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
 
         menuFile.setText("File");
 
+        menuFileOpen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         menuFileOpen.setText("Open File");
         menuFileOpen.addActionListener(new java.awt.event.ActionListener()
         {
@@ -156,7 +180,47 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         });
         menuFile.add(menuFileOpen);
 
+        menuFileQuit.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
+        menuFileQuit.setText("Quit");
+        menuFileQuit.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                menuQuitActionPerformed(evt);
+            }
+        });
+        menuFile.add(menuFileQuit);
+
         menuBar.add(menuFile);
+
+        menuSettings.setText("Settings");
+
+        menuSettings_OutputData.setText("Create Data File from Sound");
+        menuSettings_OutputData.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                menuSettings_OutputDataActionPerformed(evt);
+            }
+        });
+        menuSettings.add(menuSettings_OutputData);
+
+        menuBar.add(menuSettings);
+
+        menuHelp.setText("Help");
+
+        menuHelpAbout.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F1, java.awt.event.InputEvent.CTRL_MASK));
+        menuHelpAbout.setText("About");
+        menuHelpAbout.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                menuHelpAboutActionPerformed(evt);
+            }
+        });
+        menuHelp.add(menuHelpAbout);
+
+        menuBar.add(menuHelp);
 
         setJMenuBar(menuBar);
 
@@ -167,6 +231,27 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {//GEN-HEADEREND:event_openSoundFile
         selectSoundFile();
     }//GEN-LAST:event_openSoundFile
+
+    private void menuQuitActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuQuitActionPerformed
+    {//GEN-HEADEREND:event_menuQuitActionPerformed
+        this.dispose();
+        minim.stop();
+        System.exit(0);
+    }//GEN-LAST:event_menuQuitActionPerformed
+
+    private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuHelpAboutActionPerformed
+    {//GEN-HEADEREND:event_menuHelpAboutActionPerformed
+         JOptionPane.showMessageDialog(
+            this,
+            "Smart Beat Detector v1.0\n\n" +
+            "(C) 2013 by Stefan Marks\n" + 
+            "Auckland University of Technology, New Zealand");
+    }//GEN-LAST:event_menuHelpAboutActionPerformed
+
+    private void menuSettings_OutputDataActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuSettings_OutputDataActionPerformed
+    {//GEN-HEADEREND:event_menuSettings_OutputDataActionPerformed
+        logger.setEnabled(menuSettings_OutputData.isSelected());
+    }//GEN-LAST:event_menuSettings_OutputDataActionPerformed
 
     /**
      * @param args the command line arguments
@@ -182,8 +267,10 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
             }
         });
     }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JCheckBoxMenuItem menuSettings_OutputData;
     private javax.swing.JPanel pnlFrequencyHistory;
     private javax.swing.JPanel pnlFrequencySpectrum;
     private javax.swing.JPanel pnlPlaybackControls;
