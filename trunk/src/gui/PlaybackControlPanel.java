@@ -34,7 +34,9 @@ public class PlaybackControlPanel extends javax.swing.JPanel
                 if ( (source != null) && source.isPlaying() )
                 {
                     updateFromPlayback = true;
-                    sldTime.setValue(source.position() * STEPS_PER_SECOND / 1000);
+                    int pos = source.position();
+                    sldTime.setValue(pos * STEPS_PER_SECOND / 1000);
+                    lblTimecode.setText(String.format("%04d.%03d", pos / 1000, pos % 1000));
                     updateFromPlayback = false;
                 } 
             }  
@@ -64,6 +66,7 @@ public class PlaybackControlPanel extends javax.swing.JPanel
             l += sldTime.getMajorTickSpacing() * 1000 / STEPS_PER_SECOND;
         }
         sldTime.setLabelTable(labels);
+        lblTimecode.setText("0000.000");
         updateControls();
     }
     
@@ -72,13 +75,14 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         this.source = null;
         updateControls();
         sldTime.setValue(0);
+        lblTimecode.setText("----.---");
     }
     
     private void updateControls()
     {
         btnRewind.setEnabled(source != null);
-        btnPlay.setEnabled((source != null) && !source.isPlaying());
-        btnStop.setEnabled((source != null) && source.isPlaying());
+        btnPlay.setVisible((source != null) && !source.isPlaying());
+        btnStop.setVisible((source != null) && source.isPlaying());
         sldTime.setEnabled(source != null);
     }
     
@@ -91,27 +95,28 @@ public class PlaybackControlPanel extends javax.swing.JPanel
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents()
     {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         sldTime = new javax.swing.JSlider();
+        javax.swing.JPanel pnlButtons = new javax.swing.JPanel();
+        lblTimecode = new javax.swing.JLabel();
         btnRewind = new javax.swing.JButton();
         btnPlay = new javax.swing.JButton();
         btnStop = new javax.swing.JButton();
 
-        setLayout(new java.awt.GridBagLayout());
+        setLayout(new java.awt.BorderLayout());
 
         sldTime.setMajorTickSpacing(60);
         sldTime.setMinorTickSpacing(10);
         sldTime.setPaintLabels(true);
         sldTime.setPaintTicks(true);
         sldTime.setValue(0);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridwidth = java.awt.GridBagConstraints.REMAINDER;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 10, 0);
-        add(sldTime, gridBagConstraints);
+        add(sldTime, java.awt.BorderLayout.PAGE_START);
+
+        pnlButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+
+        lblTimecode.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
+        lblTimecode.setText("0000:000");
+        pnlButtons.add(lblTimecode);
 
         btnRewind.setText("|<");
         btnRewind.addActionListener(new java.awt.event.ActionListener()
@@ -121,15 +126,7 @@ public class PlaybackControlPanel extends javax.swing.JPanel
                 btnRewindPressed(evt);
             }
         });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.ipadx = 1;
-        gridBagConstraints.ipady = 1;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        add(btnRewind, gridBagConstraints);
+        pnlButtons.add(btnRewind);
 
         btnPlay.setText(">");
         btnPlay.addActionListener(new java.awt.event.ActionListener()
@@ -139,13 +136,7 @@ public class PlaybackControlPanel extends javax.swing.JPanel
                 btnPlayPressed(evt);
             }
         });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        add(btnPlay, gridBagConstraints);
+        pnlButtons.add(btnPlay);
 
         btnStop.setText("||");
         btnStop.addActionListener(new java.awt.event.ActionListener()
@@ -155,13 +146,9 @@ public class PlaybackControlPanel extends javax.swing.JPanel
                 btnStopPressed(evt);
             }
         });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        add(btnStop, gridBagConstraints);
+        pnlButtons.add(btnStop);
+
+        add(pnlButtons, java.awt.BorderLayout.PAGE_END);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnRewindPressed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnRewindPressed
@@ -186,6 +173,7 @@ public class PlaybackControlPanel extends javax.swing.JPanel
     private javax.swing.JButton btnPlay;
     private javax.swing.JButton btnRewind;
     private javax.swing.JButton btnStop;
+    private javax.swing.JLabel lblTimecode;
     private javax.swing.JSlider sldTime;
     // End of variables declaration//GEN-END:variables
 
