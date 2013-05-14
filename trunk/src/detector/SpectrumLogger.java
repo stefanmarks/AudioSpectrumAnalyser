@@ -20,9 +20,16 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
     {
         output = null;
         headerPrinted = false;
+        enabled = true;
         analyser.registerListener(this);
     }
     
+    /**
+     * Opens a spectrum logfile.
+     * Any file with th same name will be overwritten.
+     * 
+     * @param file  the file to open.
+     */
     public void openLogfile(File file) 
     {
         try
@@ -36,6 +43,9 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
         }
     }
     
+    /**
+     * Closes the spectrum logfile.
+     */
     public void closeLogfile()
     {
         if ( output != null )
@@ -45,10 +55,34 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
         }        
     }
     
+    
+    /**
+     * Checks if the logger is enabled.
+     * 
+     * @return <code>true</code> if the logger is enabled, 
+     *         <code>false</code> if not
+     */
+    public boolean isEnabled()
+    {
+        return enabled;
+    }
+    
+    /**
+     * Enables or disables he logger.
+     * 
+     * @param enabled  <code>true</code> to enable the logger, 
+     *                 <code>false</code> to disable
+     */
+    public void setEnabled(boolean enabled)
+    {
+        this.enabled = enabled;
+    }
+            
+    
     @Override
     public void analysisUpdated(SpectrumAnalyser analyser)
     {
-        if ( output != null )
+        if ( output != null && enabled )
         {
             if ( !headerPrinted )
             {
@@ -75,5 +109,6 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
     }
 
     PrintStream output;
+    boolean     enabled;
     boolean     headerPrinted;
 }
