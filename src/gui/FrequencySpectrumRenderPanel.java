@@ -2,6 +2,7 @@ package gui;
 
 import detector.SpectrumAnalyser;
 import detector.SpectrumInfo;
+import java.awt.AWTEvent;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -9,6 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.awt.event.MouseEvent;
 import javax.swing.JPanel;
 
 /**
@@ -17,7 +19,9 @@ import javax.swing.JPanel;
  * @author Stefan Marks
  * @verison 1.0 - 10.05.2013: Created
  */
-public class FrequencySpectrumRenderPanel extends JPanel implements SpectrumAnalyser.Listener
+public class FrequencySpectrumRenderPanel 
+    extends JPanel 
+    implements SpectrumAnalyser.Listener
 {
     public FrequencySpectrumRenderPanel(SpectrumAnalyser analyser)
     {
@@ -33,6 +37,9 @@ public class FrequencySpectrumRenderPanel extends JPanel implements SpectrumAnal
         
         this.analyser = analyser;
         analyser.registerListener(this);
+        
+        // enable mouse motion events to analyse signal when paused
+        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
     }
 
     @Override
@@ -43,6 +50,14 @@ public class FrequencySpectrumRenderPanel extends JPanel implements SpectrumAnal
         yScale = height * 8 / 10;
     }
 
+    @Override
+    protected void processMouseMotionEvent(MouseEvent e)
+    {
+        super.processMouseMotionEvent(e);
+        repaint();
+    }
+
+    
     @Override
     public void analysisUpdated(SpectrumAnalyser analyser)
     {
