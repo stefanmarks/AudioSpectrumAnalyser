@@ -29,7 +29,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         initComponents();
         
-        analyser = new SpectrumAnalyser(1024);
+        analyser = new SpectrumAnalyser(2048);
         logger   = new SpectrumLogger(analyser);
         
         renderWaveform = new WaveformRenderPanel(analyser);
@@ -77,7 +77,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         // close old file first?
         closeSoundFile();
         
-        sound = minim.loadFile(file.getAbsolutePath(), 2048);
+        sound = minim.loadFile(file.getAbsolutePath(), 512);
         analyser.attachToAudio(sound);
         logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
         logger.setEnabled(menuSettings_OutputData.isSelected());
