@@ -8,7 +8,6 @@ import detector.SpectrumLogger;
 import gui.WaveformRenderPanel;
 import ddf.minim.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import processing.core.PApplet;
@@ -21,6 +20,8 @@ import processing.core.PApplet;
  */
 public class BeatAnalyzerApp extends javax.swing.JFrame
 {
+    private static final String VERSION_NO = "1.1";
+    
     /**
      * Creates new form BeatAnalyzerApp
      */
@@ -76,7 +77,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         // close old file first?
         closeSoundFile();
         
-        sound = minim.loadFile(file.getAbsolutePath(), 1024);
+        sound = minim.loadFile(file.getAbsolutePath(), 2048);
         analyser.attachToAudio(sound);
         logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
         logger.setEnabled(menuSettings_OutputData.isSelected());
@@ -244,7 +245,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {//GEN-HEADEREND:event_menuHelpAboutActionPerformed
          JOptionPane.showMessageDialog(
             this,
-            "Smart Beat Detector v1.0\n\n" +
+            "Smart Beat Detector v" + VERSION_NO + "\n\n" +
             "(C) 2013 by Stefan Marks\n" + 
             "Auckland University of Technology, New Zealand");
     }//GEN-LAST:event_menuHelpAboutActionPerformed
