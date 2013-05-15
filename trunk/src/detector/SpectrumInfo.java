@@ -1,6 +1,5 @@
 package detector;
 
-import ddf.minim.AudioSource;
 import ddf.minim.analysis.FFT;
 
 /**
@@ -11,11 +10,19 @@ import ddf.minim.analysis.FFT;
  */
 public class SpectrumInfo 
 {
+    /**
+     * Creates a new spectrum information instance.
+     */
     public SpectrumInfo()
     {
         reset();
     }
 
+    /**
+     * Copies spectrum analysis data from an FFT analyser.
+     * 
+     * @param fft  the FFT analyser to use
+     */
     public void copyData(FFT fft)
     {
         if ( (intensity == null) || (intensity.length != fft.avgSize()) )
@@ -28,17 +35,28 @@ public class SpectrumInfo
         }
     }
     
+    /**
+     * Resets the spectrum information.
+     */
     public void reset()
     {
         sampleIdx = 0;
         intensity = null;
     }
     
+    /**
+     * Checks if she information in this dataset is defined or not.
+     * 
+     * @return <code>true</code> if the dataset is defined,
+     *         <code>false</code> if not
+     */
     public boolean isDefined()
     {
         return intensity != null;
     }
     
+    // millisecond index into the sound file
     public int     sampleIdx;
+    // array of frequency intensities
     public float[] intensity;
 }

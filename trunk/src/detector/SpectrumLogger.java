@@ -6,21 +6,27 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 /**
- * Class for logging the spectrum information to a CSV file.
+ * Class for logging the spectrum information to a text data file (e.g., CSV).
  * 
  * @author  Stefan Marks
  * @version 1.0 - 14.05.2013: Created
  */
 public class SpectrumLogger implements SpectrumAnalyser.Listener
 {
-
+    /**
+     * Creates a spectrum information logger.
+     * 
+     * @param analyser the spectrum analyser to attach to
+     */
     public SpectrumLogger(SpectrumAnalyser analyser)
     {
-        output = null;
+        outputFile    = null;
+        output        = null;
         headerPrinted = false;
-        enabled = true;
+        enabled       = true;
         analyser.registerListener(this);
     }
     
@@ -28,19 +34,12 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
      * Opens a spectrum logfile.
      * Any file with th same name will be overwritten.
      * 
-     * @param file  the file to open.
+     * @param file  the file to open
      */
     public void openLogfile(File file) 
     {
-        try
-        {
-            output        = new PrintStream(file);
-            headerPrinted = false;
-        } 
-        catch (FileNotFoundException ex)
-        {
-            Logger.getLogger(SpectrumLogger.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        outputFile    = file;
+        headerPrinted = false;
     }
     
     /**
@@ -55,7 +54,6 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
         }        
     }
     
-    
     /**
      * Checks if the logger is enabled.
      * 
@@ -68,7 +66,7 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
     }
     
     /**
-     * Enables or disables he logger.
+     * Enables or disables the logger.
      * 
      * @param enabled  <code>true</code> to enable the logger, 
      *                 <code>false</code> to disable
@@ -82,7 +80,20 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
     @Override
     public void analysisUpdated(SpectrumAnalyser analyser)
     {
-        if ( output != null && enabled )
+        if ( !enabled ) return;
+        
+        if ( output == null )
+        {
+            try {
+                output = new PrintStream(outputFile);
+            }
+            catch (FileNotFoundException e)
+            {
+                enabled = false;
+            }
+        }
+        
+        if ( output != null )
         {
             if ( !headerPrinted )
             {
@@ -108,6 +119,7 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
         }
     }
 
+    File        outputFile;
     PrintStream output;
     boolean     enabled;
     boolean     headerPrinted;

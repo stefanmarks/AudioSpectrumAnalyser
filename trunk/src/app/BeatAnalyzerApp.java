@@ -8,6 +8,7 @@ import detector.SpectrumLogger;
 import gui.WaveformRenderPanel;
 import ddf.minim.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import processing.core.PApplet;
