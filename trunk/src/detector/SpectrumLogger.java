@@ -4,9 +4,6 @@ import ddf.minim.analysis.FFT;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 
 /**
  * Class for logging the spectrum information to a text data file (e.g., CSV).

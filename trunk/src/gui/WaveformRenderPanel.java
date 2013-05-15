@@ -51,8 +51,8 @@ public class WaveformRenderPanel extends JPanel implements SpectrumAnalyser.List
     @Override
     public void analysisUpdated(SpectrumAnalyser analyser)
     {
-      samplesL = analyser.getSamplesL();
-      samplesR = analyser.getSamplesR();
+      samplesL = analyser.getAudioDataL();
+      samplesR = analyser.getAudioDataR();
       repaint();
     }
   

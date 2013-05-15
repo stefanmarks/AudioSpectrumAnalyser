@@ -5,6 +5,7 @@ import ddf.minim.AudioSource;
 import ddf.minim.Playable;
 import ddf.minim.analysis.BlackmanWindow;
 import ddf.minim.analysis.FFT;
+import ddf.minim.analysis.HannWindow;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class SpectrumAnalyser implements AudioListener
     public SpectrumAnalyser(int historySize)
     {
         audioSource = null;
-        samplesL = samplesR = null; 
+        dataRawL = dataRawR = null; 
         fft = null;
         
         history = new SpectrumInfo[historySize];
@@ -51,10 +52,21 @@ public class SpectrumAnalyser implements AudioListener
     public void attachToAudio(AudioSource as)
     {
         as.addListener(this);    
-        samplesL = samplesR = null;
-        fft = new FFT(as.bufferSize(), as.sampleRate());
+        // calculate minimum buffer size to 
+        // reliably measure a whole phase of a specific minimum frequency
+        float rate = as.sampleRate();
+        float minFreq = 20;
+        int   minBufferSize = 1 << (int) (Math.log(rate / minFreq) / Math.log(2));
+        System.out.println(minBufferSize);
+        
+        dataRawL = new float[minBufferSize];
+        dataFftL = new float[minBufferSize];
+        dataRawR = new float[minBufferSize];
+        dataFftR = new float[minBufferSize];
+        
+        fft = new FFT(minBufferSize, rate);
         fft.logAverages(100, 8);
-        fft.window(new BlackmanWindow());
+        fft.window(new HannWindow());
         audioSource = (Playable) as;
     }
     
@@ -87,15 +99,19 @@ public class SpectrumAnalyser implements AudioListener
     {
         if ( (audioSource == null) || !audioSource.isPlaying() ) return;
         
+        // shift data in input arrays
+        System.arraycopy(dataRawL, sampL.length, dataRawL, 0, dataRawL.length - sampL.length);
+        System.arraycopy(dataRawR, sampR.length, dataRawR, 0, dataRawR.length - sampR.length);
         // copy samples into array for analysis
-        if ( samplesL == null  ) { samplesL = Arrays.copyOf(sampL, sampL.length); }
-        else                     { System.arraycopy(sampL, 0, samplesL, 0, sampL.length); }
-        if ( samplesR == null  ) { samplesR = Arrays.copyOf(sampR, sampR.length); }
-        else                     { System.arraycopy(sampL, 0, samplesR, 0, sampR.length); }
+        System.arraycopy(sampL, 0, dataRawL, dataRawL.length - sampL.length, sampL.length); 
+        System.arraycopy(sampL, 0, dataRawR, dataRawR.length - sampR.length, sampR.length); 
+        // copy samples array into FFT array so values can be shaped by teh windows
+        System.arraycopy(dataRawL, 0, dataFftL, 0, dataRawL.length);
+        System.arraycopy(dataRawR, 0, dataFftR, 0, dataRawR.length); 
 
         if ( fft != null ) 
         {
-            fft.forward(samplesL);
+            fft.forward(dataFftL);
             synchronized(history)
             {      
                 history[historyIdx].sampleIdx = audioSource.position();
@@ -111,14 +127,14 @@ public class SpectrumAnalyser implements AudioListener
         }
     }
   
-    public float[] getSamplesL()
+    public float[] getAudioDataL()
     {
-        return samplesL;
+        return dataRawL;
     }
     
-    public float[] getSamplesR()
+    public float[] getAudioDataR()
     {
-        return samplesR;
+        return dataRawR;
     }
     
     public int getHistorySize()
@@ -137,13 +153,18 @@ public class SpectrumAnalyser implements AudioListener
         }
     }
     
+    /**
+     * Gets the FFT analyser.
+     * 
+     * @return the FFT analyser
+     */
     public FFT getFFT()
     {
         return fft;
     }
 
     private Playable             audioSource;
-    private float[]              samplesL, samplesR;
+    private float[]              dataRawL, dataRawR, dataFftL, dataFftR;
     private FFT                  fft;
     private final SpectrumInfo[] history;
     private int                  historyIdx;
