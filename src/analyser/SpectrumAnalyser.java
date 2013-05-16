@@ -22,12 +22,19 @@ import java.util.logging.Logger;
  */
 public class SpectrumAnalyser implements AudioListener
 {
+    /**
+     * Listener class for notifications when a new sampkle has been analysed.
+     */
     public interface Listener
     {
         void analysisUpdated(SpectrumAnalyser analyser);
     };
     
-    
+    /**
+     * Creates a new Spectrum Analyser instance.
+     * 
+     * @param historySize  the size of the spectrum history
+     */
     public SpectrumAnalyser(int historySize)
     {
         audioSource = null;
@@ -45,6 +52,9 @@ public class SpectrumAnalyser implements AudioListener
         listeners = new HashSet<>();
     }
     
+    /**
+     * Resets the spectrum history.
+     */
     private void resetHistory()
     {
         for ( SpectrumInfo info : history )
@@ -54,15 +64,21 @@ public class SpectrumAnalyser implements AudioListener
         historyIdx = 0;
     }
     
+    /**
+     * Attaches the spectrum analyser to an audio stream.
+     * 
+     * @param as  the audio stream to attach to
+     */
     public void attachToAudio(AudioSource as)
     {
-        as.addListener(this);    
-        // calculate minimum buffer size to 
-        // reliably measure a whole phase of a specific minimum frequency
+        // calculate minimum buffer size 
+        // to reliably measure a whole phase of a specific minimum frequency
         float rate = as.sampleRate();
         float minFreq = 20;
         int   minBufferSize = 1 << (int) (Math.log(rate / minFreq) / Math.log(2));
-        LOG.log(Level.INFO, "Attached to sound source (Sample Rate {0}, FFT Buffer size {1})", new Object[] {rate, minBufferSize});
+        LOG.log(Level.INFO, 
+                "Attached to sound source (Sample Rate {0}, FFT Buffer size {1})", 
+                new Object[] {rate, minBufferSize});
         
         dataRawL = new float[minBufferSize];
         dataFftL = new float[minBufferSize];
@@ -75,12 +91,18 @@ public class SpectrumAnalyser implements AudioListener
         audioSource = (Playable) as;
     }
     
-    public void detachFromAudio(AudioSource as)
+    /**
+     * Detaches the spectrum analyser from the audio source.
+     */
+    public void detachFromAudio()
     {
-        as.removeListener(this);  
-        fft = null;
-        audioSource = null;
-        resetHistory();
+        if ( audioSource != null )
+        {
+            ((AudioSource) audioSource).removeListener(this);  
+            fft = null;
+            audioSource = null;
+            resetHistory();
+        }
     }
     
     /**

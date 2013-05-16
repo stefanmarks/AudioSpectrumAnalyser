@@ -13,7 +13,7 @@ import ddf.minim.analysis.FFT;
 public class SpikeFeatureDetector extends FeatureDetector
 { 
     /**
-     * Creates a new spike feature detector
+     * Creates a new spike feature detector.
      * 
      * @param name      the name of the feature
      * @param bitNum    the feature bit number to set
@@ -59,6 +59,6 @@ public class SpikeFeatureDetector extends FeatureDetector
         }
         return detected;
     }
-    
+
     private float freqLow, freqHigh;
 }
