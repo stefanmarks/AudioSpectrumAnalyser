@@ -1,7 +1,7 @@
 package gui;
 
-import detector.SpectrumAnalyser;
-import detector.SpectrumInfo;
+import analyser.SpectrumAnalyser;
+import analyser.SpectrumInfo;
 import java.awt.AWTEvent;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -78,7 +78,7 @@ public class FrequencySpectrumRenderPanel
         Rectangle r = new Rectangle();
         
         // draw signal
-        if ( (spectrum != null) && spectrum.isDefined() )
+        if ( spectrum != null )
         {   
             xScale = getBounds().width / spectrum.intensity.length;
             g.setStroke(strokeSignal);

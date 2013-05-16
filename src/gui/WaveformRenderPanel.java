@@ -1,6 +1,6 @@
 package gui;
 
-import detector.SpectrumAnalyser;
+import analyser.SpectrumAnalyser;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;

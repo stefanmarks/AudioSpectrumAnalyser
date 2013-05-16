@@ -31,6 +31,11 @@ public class Feature
         return name;
     }
     
+    /**
+     * Gets the feature's bitmask.
+     * 
+     * @return the feature's bitmask
+     */
     public long getBitmask()
     {
         return bitMask;
