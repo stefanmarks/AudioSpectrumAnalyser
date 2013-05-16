@@ -3,11 +3,11 @@ package detector;
 import ddf.minim.AudioListener;
 import ddf.minim.AudioSource;
 import ddf.minim.Playable;
-import ddf.minim.analysis.BlackmanWindow;
 import ddf.minim.analysis.FFT;
 import ddf.minim.analysis.HannWindow;
-import java.util.Arrays;
+import java.util.List;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 /**
@@ -37,6 +37,7 @@ public class SpectrumAnalyser implements AudioListener
         }
         historyIdx = 0;
         
+        featureDetectors = new HashSet<>();
         listeners = new HashSet<>();
     }
     
@@ -78,11 +79,64 @@ public class SpectrumAnalyser implements AudioListener
         resetHistory();
     }
     
+    /**
+     * Registers a new feature detector.
+     * 
+     * @param fd  the feature detector to register.
+     * @return <code>true</code> if the detector was successfully registered,
+     *         <code>false</code> if not
+     */
+    public boolean registerFeatureDetector(FeatureDetector fd)
+    {
+        return featureDetectors.add(fd);
+    }
+    
+    /**
+     * Gets a list of detected features of this analyser.
+     * 
+     * @return a list of detected features
+     */
+    public List<Feature> getDetectedFeatures()
+    {
+        List<Feature> features = new LinkedList<>();
+        for ( FeatureDetector fd : featureDetectors )
+        {
+            features.add(fd.getFeature());
+        }
+        return features;
+    }
+    
+    /**
+     * Unregisters a feature detector.
+     * 
+     * @param fd  the feature detector to unregister.
+     * @return <code>true</code> if the detector was successfully unregistered,
+     *         <code>false</code> if not
+     */
+    public boolean unregisterDetector(FeatureDetector fd)
+    {
+        return featureDetectors.remove(fd);
+    }
+    
+    /**
+     * Registers a new analysis result listener.
+     * 
+     * @param fd  the analysis result listener to register.
+     * @return <code>true</code> if the analysis result listener was successfully registered,
+     *         <code>false</code> if not
+     */
     public boolean registerListener(Listener l)
     {
         return listeners.add(l);
     }
     
+    /**
+     * Unregisters an analysis result listener.
+     * 
+     * @param fd  the analysis result listener to un register.
+     * @return <code>true</code> if the analysis result listener was successfully unregistered,
+     *         <code>false</code> if not
+     */
     public boolean unregisterListener(Listener l)
     {
         return listeners.remove(l);
@@ -115,8 +169,18 @@ public class SpectrumAnalyser implements AudioListener
             synchronized(history)
             {      
                 history[historyIdx].sampleIdx = audioSource.position();
-                history[historyIdx].copyData(fft);
+                history[historyIdx].copySpectrumData(fft);
                 historyIdx = (historyIdx + 1) % history.length;
+            }
+            
+            // run feature detectors
+            for ( FeatureDetector featureDetector : featureDetectors )
+            {
+                if ( featureDetector.detectFeature(this) )
+                {
+                    // feature detected: set bit
+                    history[historyIdx].features |= featureDetector.getFeature().getBitmask();
+                }
             }
             
             // notify listeners
@@ -200,5 +264,6 @@ public class SpectrumAnalyser implements AudioListener
     private FFT                  fft;
     private final SpectrumInfo[] history;
     private int                  historyIdx;
+    private Set<FeatureDetector> featureDetectors;
     private Set<Listener>        listeners;
 }

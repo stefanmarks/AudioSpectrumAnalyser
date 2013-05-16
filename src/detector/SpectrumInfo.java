@@ -23,7 +23,7 @@ public class SpectrumInfo
      * 
      * @param fft  the FFT analyser to use
      */
-    public void copyData(FFT fft)
+    public void copySpectrumData(FFT fft)
     {
         if ( (intensity == null) || (intensity.length != fft.avgSize()) )
         {
@@ -42,6 +42,7 @@ public class SpectrumInfo
     {
         sampleIdx = 0;
         intensity = null;
+        features  = 0;
     }
     
     /**
@@ -59,4 +60,6 @@ public class SpectrumInfo
     public int     sampleIdx;
     // array of frequency intensities
     public float[] intensity;
+    // bitmap with detected features
+    public long    features;
 }
