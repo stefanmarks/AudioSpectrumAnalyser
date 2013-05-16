@@ -10,15 +10,17 @@ import javax.swing.JLabel;
 import javax.swing.event.ChangeListener;
 
 /**
- *
- * @author Stefan Marks
+ * JPanel for controlling playback of an audio stream.
+ * 
+ * @author  Stefan Marks
+ * @version 1.0 - 15.05.2013: Created
  */
 public class PlaybackControlPanel extends javax.swing.JPanel
 {
     private static final int STEPS_PER_SECOND = 10;
     
     /**
-     * Creates new form PlaybackControl
+     * Creates a new playback control panel.
      */
     public PlaybackControlPanel()
     {
@@ -46,6 +48,11 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         sldTime.addChangeListener(new SliderChangeListener());
     }
 
+    /**
+     * Attaches a playable object to this playback controller.
+     * 
+     * @param playable the playable object to control with this panel
+     */
     public void attachToAudio(Playable playable)
     {
         this.source = playable;
@@ -70,6 +77,9 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         updateControls();
     }
     
+    /**
+     * Detaches the panel from the playable object.
+     */
     public void detachFromAudio()
     {
         this.source = null;
