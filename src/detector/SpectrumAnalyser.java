@@ -127,21 +127,53 @@ public class SpectrumAnalyser implements AudioListener
         }
     }
   
+    /**
+     * Gets the raw audio data for the left channel.
+     * 
+     * @return the raw left channel audio data
+     */
     public float[] getAudioDataL()
     {
         return dataRawL;
     }
     
+    /**
+     * Gets the raw audio data for the right channel.
+     * 
+     * @return the raw right channel audio data
+     */
     public float[] getAudioDataR()
     {
         return dataRawR;
     }
     
+    /**
+     * Gets the number of frequency bands the analyser returns.
+     * 
+     * @return the number of ferquency bands
+     */
+    public int getSpectrumBandCount()
+    {
+        return fft.avgSize();
+    }
+    
+    /**
+     * Gets the size of the spectrum history buffer.
+     * 
+     * @return the size of the frequency history buffer
+     */
     public int getHistorySize()
     {
         return history.length;
     }
     
+    /**
+     * Gets the spectrum information for a specific position in history.
+     * 
+     * @param idx  the index of history (0: most recent)
+     * @return the spectrum information 
+     *         or <code>null</code> if there is no information
+     */
     public SpectrumInfo getSpectrumInfo(int idx)
     {
         if ( idx >= history.length ) return null;
