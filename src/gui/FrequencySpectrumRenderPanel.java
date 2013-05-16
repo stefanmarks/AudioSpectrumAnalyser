@@ -78,7 +78,7 @@ public class FrequencySpectrumRenderPanel
         Rectangle r = new Rectangle();
         
         // draw signal
-        if ( spectrum != null )
+        if ( (spectrum != null) && spectrum.isDefined() )
         {   
             xScale = getBounds().width / spectrum.intensity.length;
             g.setStroke(strokeSignal);

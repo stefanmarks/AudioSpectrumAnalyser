@@ -7,7 +7,7 @@ import analyser.SpectrumAnalyser;
 import output.SpectrumLogger;
 import gui.WaveformRenderPanel;
 import ddf.minim.*;
-import detector.KickFeatureDetector;
+import detector.SpikeFeatureDetector;
 import gui.FeatureHistoryRenderPanel;
 import java.awt.BorderLayout;
 import java.io.File;
@@ -35,8 +35,8 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         analyser = new SpectrumAnalyser(2048);
         logger   = new SpectrumLogger(analyser);
         
-        analyser.registerFeatureDetector(new KickFeatureDetector("Bass",  20,   70,   0));
-        analyser.registerFeatureDetector(new KickFeatureDetector("Snare", 2000, 7000, 1));
+        analyser.registerFeatureDetector(new SpikeFeatureDetector("Bass",  0, 20, 150));
+        //analyser.registerFeatureDetector(new SpikeFeatureDetector("Snare", 1, 2000, 7000));
         
         renderWaveform = new WaveformRenderPanel(analyser);
         pnlWaveform.add(renderWaveform);

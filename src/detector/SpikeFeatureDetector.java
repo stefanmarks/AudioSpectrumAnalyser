@@ -5,24 +5,26 @@ import analyser.SpectrumInfo;
 import ddf.minim.analysis.FFT;
 
 /**
- * Kick (=bass drum) feature detector.
+ * Spike feature detector.
  * 
  * @author  Stefan Marks
  * @version 1.0 - 16.05.2013: Created
  */
-public class KickFeatureDetector extends FeatureDetector
+public class SpikeFeatureDetector extends FeatureDetector
 { 
     /**
-     * Creates a new kick feature detector
+     * Creates a new spike feature detector
      * 
-     * @param frequency the kick frequency to watch
+     * @param name      the name of the feature
      * @param bitNum    the feature bit number to set
+     * @param freqLow   the lower end of the spectrum to observe
+     * @param freqHigh  the upper end of the spectrum to observe
      */
-    public KickFeatureDetector(String name, float freqLow, float freqHigh, int bitNum)
+    public SpikeFeatureDetector(String name, int bitNum, float freqLow, float freqHigh)
     {
         super(new Feature(name, bitNum));
-        this.kickFreqLow  = freqLow;
-        this.kickFreqHigh = freqHigh;
+        this.freqLow  = freqLow;
+        this.freqHigh = freqHigh;
     }
     
     @Override
@@ -31,8 +33,8 @@ public class KickFeatureDetector extends FeatureDetector
         boolean detected = false;
         // what spectrum index is the watch frequency range?
         FFT fft = analyser.getFFT();
-        int idx0 = fft.freqToIndex(kickFreqLow);
-        int idx1 = fft.freqToIndex(kickFreqHigh);
+        int specIdxFrom = fft.freqToIndex(freqLow);
+        int specIdxTo   = fft.freqToIndex(freqHigh);
         // compare current and previous spectrum intensities
         SpectrumInfo si0 = analyser.getSpectrumInfo(0);
         SpectrumInfo si1 = analyser.getSpectrumInfo(1);
@@ -42,19 +44,21 @@ public class KickFeatureDetector extends FeatureDetector
             float sum0 = 0;
             float sum1 = 0;
             float sum2 = 0;
-            for ( int idx = idx0 ; idx <= idx1 ; idx++ )
+            for ( int idx = specIdxFrom ; idx <= specIdxTo ; idx++ )
             {
-                sum0 += si0.intensityRaw[idx];
-                sum1 += si1.intensityRaw[idx];
-                sum2 += si2.intensityRaw[idx];
+                sum0 += si0.intensityRaw[idx]; // sustain?
+                sum1 += si1.intensityRaw[idx]; // peak?
+                sum2 += si2.intensityRaw[idx]; // low attack
             }
-            if ( 1.1 * sum0 < sum1 && sum1 > 1.1 * sum2 )
+            if ( (sum1 > sum0) && (sum1 > sum2) && 
+                 (sum1 - sum2) > (sum1 - sum0) && (sum1-sum2) > 2)
             {
                 detected = true;
+                System.out.println(sum1-sum2);
             }
         }
         return detected;
     }
     
-    private float kickFreqLow, kickFreqHigh;
+    private float freqLow, freqHigh;
 }
