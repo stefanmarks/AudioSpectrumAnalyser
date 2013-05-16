@@ -56,7 +56,6 @@ public class FrequencySpectrumRenderPanel
         super.processMouseMotionEvent(e);
         repaint();
     }
-
     
     @Override
     public void analysisUpdated(SpectrumAnalyser analyser)
@@ -86,9 +85,9 @@ public class FrequencySpectrumRenderPanel
             for ( int i = 0 ; i < spectrum.intensity.length ; i++ )
             {
                 // calculate rectangle fro full bar
-                r.x = i * xScale + 1;
+                r.x      = i * xScale + 1;
                 r.width  = xScale - 2;
-                r.y = 0;
+                r.y      = 0;
                 r.height = getBounds().height;
                         
                 // check if mouse is within that rect 
