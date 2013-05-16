@@ -100,7 +100,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         if ( sound != null )
         {
-            analyser.detachFromAudio(sound);
+            analyser.detachFromAudio();
             logger.closeLogfile();                    
             playbackControl.detachFromAudio();
             sound.close();
