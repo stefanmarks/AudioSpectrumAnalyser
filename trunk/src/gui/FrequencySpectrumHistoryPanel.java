@@ -1,7 +1,7 @@
 package gui;
 
-import detector.SpectrumAnalyser;
-import detector.SpectrumInfo;
+import analyser.SpectrumAnalyser;
+import analyser.SpectrumInfo;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -58,7 +58,7 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         for ( int x = 0 ; x < analyser.getHistorySize() ; x++ )
         {   
             SpectrumInfo info = analyser.getSpectrumInfo(x);
-            if ( (info == null) || !info.isDefined() ) break;
+            if ( info == null ) break;
             
             for ( int i = 0; i < info.intensity.length; i++ )
             {
@@ -83,7 +83,7 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
             for ( int x = 0 ; x < analyser.getHistorySize() ; x++ )
             {   
                 SpectrumInfo info = analyser.getSpectrumInfo(x);
-                if ( (info == null) || !info.isDefined() ) break;
+                if ( info == null ) break;
                 y = yBase - (int) (info.intensity[idx] * bounds.height / 6);
                 g.drawLine(x-1, yOld, x, y);
                 yOld = y;

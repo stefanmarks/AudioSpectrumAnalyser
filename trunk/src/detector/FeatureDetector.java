@@ -1,7 +1,9 @@
 package detector;
 
+import analyser.SpectrumAnalyser;
+
 /**
- * Base class for an audio feature detector;
+ * Base class for an audio feature detector.
  * 
  * @author  Stefan Marks
  * @version 1.0 - 16.05.2013: Created

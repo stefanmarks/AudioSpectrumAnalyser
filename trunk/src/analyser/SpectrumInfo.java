@@ -1,6 +1,7 @@
-package detector;
+package analyser;
 
 import ddf.minim.analysis.FFT;
+import detector.Feature;
 
 /**
  * Class with information about the spectrum at a specific time.
@@ -25,13 +26,19 @@ public class SpectrumInfo
      */
     public void copySpectrumData(FFT fft)
     {
-        if ( (intensity == null) || (intensity.length != fft.avgSize()) )
+        int spectrumSize = fft.avgSize();
+        if ( (intensity == null) || (intensity.length != spectrumSize) )
         {
-            intensity = new float[fft.avgSize()];
+            intensity    = new float[spectrumSize];
+            intensityRaw = new float[fft.specSize()];
         }
-        for (int i = 0; i < fft.avgSize(); i++)
+        for (int i = 0; i < spectrumSize; i++)
         {
             intensity[i] = (float) Math.log(1 + fft.getAvg(i));
+        }
+        for (int i = 0; i < fft.specSize(); i++)
+        {
+            intensityRaw[i] = (float) Math.log(1 + fft.getBand(i));
         }
     }
     
@@ -40,13 +47,14 @@ public class SpectrumInfo
      */
     public void reset()
     {
-        sampleIdx = 0;
-        intensity = null;
-        features  = 0;
+        sampleIdx    = 0;
+        intensity    = null;
+        intensityRaw = null;
+        features     = 0;
     }
     
     /**
-     * Checks if she information in this dataset is defined or not.
+     * Checks if the information in this dataset is defined or not.
      * 
      * @return <code>true</code> if the dataset is defined,
      *         <code>false</code> if not
@@ -56,10 +64,24 @@ public class SpectrumInfo
         return intensity != null;
     }
     
+    /**
+     * Checks if a specific feature has been detected.
+     * 
+     * @return <code>true</code> if the feature has been detected,
+     *         <code>false</code> if not
+     */
+    public boolean hasFeature(Feature f)
+    {
+        return (features & f.getBitmask()) != 0;
+    }
+        
+    
     // millisecond index into the sound file
     public int     sampleIdx;
     // array of frequency intensities
     public float[] intensity;
+    // array of frequency intensities 
+    public float[] intensityRaw;
     // bitmap with detected features
     public long    features;
 }

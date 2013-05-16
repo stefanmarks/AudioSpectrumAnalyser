@@ -1,5 +1,7 @@
-package detector;
+package output;
 
+import analyser.SpectrumInfo;
+import analyser.SpectrumAnalyser;
 import ddf.minim.analysis.FFT;
 import java.io.File;
 import java.io.FileNotFoundException;

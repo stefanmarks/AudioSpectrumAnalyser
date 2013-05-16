@@ -1,14 +1,18 @@
-package detector;
+package analyser;
 
 import ddf.minim.AudioListener;
 import ddf.minim.AudioSource;
 import ddf.minim.Playable;
 import ddf.minim.analysis.FFT;
 import ddf.minim.analysis.HannWindow;
+import detector.Feature;
+import detector.FeatureDetector;
 import java.util.List;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class for analysing the spectrum of an audio stream.
@@ -58,7 +62,7 @@ public class SpectrumAnalyser implements AudioListener
         float rate = as.sampleRate();
         float minFreq = 20;
         int   minBufferSize = 1 << (int) (Math.log(rate / minFreq) / Math.log(2));
-        System.out.println(minBufferSize);
+        LOG.log(Level.INFO, "Attached to sound source (Sample Rate {0}, FFT Buffer size {1})", new Object[] {rate, minBufferSize});
         
         dataRawL = new float[minBufferSize];
         dataFftL = new float[minBufferSize];
@@ -104,6 +108,16 @@ public class SpectrumAnalyser implements AudioListener
             features.add(fd.getFeature());
         }
         return features;
+    }
+    
+    /**
+     * Gets the number of detected features of this analyser.
+     * 
+     * @return the number of detected features
+     */
+    public int getDetectedFeaturesCount()
+    {
+        return featureDetectors.size();
     }
     
     /**
@@ -240,13 +254,26 @@ public class SpectrumAnalyser implements AudioListener
      */
     public SpectrumInfo getSpectrumInfo(int idx)
     {
-        if ( idx >= history.length ) return null;
-        synchronized(history)
+        SpectrumInfo retInfo = null;
+        
+        if ( idx < history.length )
         {
-            int absIdx = historyIdx - 1 - idx;
-            if ( absIdx < 0 ) { absIdx += history.length; }
-            return history[absIdx];
+            synchronized(history)
+            {
+                int absIdx = historyIdx - 1 - idx;
+                if ( absIdx < 0 ) 
+                { 
+                    absIdx += history.length; 
+                }
+                retInfo = history[absIdx];
+            }
+            if ( !retInfo.isDefined() )
+            {
+                // not defined -> return null
+                retInfo = null;
+            }
         }
+        return retInfo;
     }
     
     /**
@@ -266,4 +293,6 @@ public class SpectrumAnalyser implements AudioListener
     private int                  historyIdx;
     private Set<FeatureDetector> featureDetectors;
     private Set<Listener>        listeners;
+
+    private static final Logger LOG = Logger.getLogger(SpectrumAnalyser.class.getName());
 }

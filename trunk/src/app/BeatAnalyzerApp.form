@@ -176,7 +176,7 @@
           <Border info="org.netbeans.modules.form.compat2.border.CompoundBorderInfo">
             <CompoundBorder>
               <Border PropertyName="outside" info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Frequency Spectrum History"/>
+                <TitledBorder title="Frequency Spectrum and Feature History"/>
               </Border>
               <Border PropertyName="inside" info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
                 <LineBorder>
@@ -193,7 +193,9 @@
         </Constraint>
       </Constraints>
 
-      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout">
+        <Property name="verticalGap" type="int" value="5"/>
+      </Layout>
     </Container>
     <Container class="javax.swing.JPanel" name="pnlPlaybackControls">
       <Properties>

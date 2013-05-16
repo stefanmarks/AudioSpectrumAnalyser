@@ -3,10 +3,13 @@ package app;
 import gui.FrequencySpectrumHistoryPanel;
 import gui.FrequencySpectrumRenderPanel;
 import gui.PlaybackControlPanel;
-import detector.SpectrumAnalyser;
-import detector.SpectrumLogger;
+import analyser.SpectrumAnalyser;
+import output.SpectrumLogger;
 import gui.WaveformRenderPanel;
 import ddf.minim.*;
+import detector.KickFeatureDetector;
+import gui.FeatureHistoryRenderPanel;
+import java.awt.BorderLayout;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -32,14 +35,20 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         analyser = new SpectrumAnalyser(2048);
         logger   = new SpectrumLogger(analyser);
         
+        analyser.registerFeatureDetector(new KickFeatureDetector("Bass",  20,   70,   0));
+        analyser.registerFeatureDetector(new KickFeatureDetector("Snare", 2000, 7000, 1));
+        
         renderWaveform = new WaveformRenderPanel(analyser);
         pnlWaveform.add(renderWaveform);
         
         renderFrequencySpectrum = new FrequencySpectrumRenderPanel(analyser);
         pnlFrequencySpectrum.add(renderFrequencySpectrum);
         
+        renderFeatureHistory = new FeatureHistoryRenderPanel(analyser);
+        pnlFrequencyHistory.add(renderFeatureHistory, BorderLayout.NORTH);
+        
         renderFrequencyHistory = new FrequencySpectrumHistoryPanel(analyser);
-        pnlFrequencyHistory.add(renderFrequencyHistory);
+        pnlFrequencyHistory.add(renderFrequencyHistory, BorderLayout.CENTER);
         
         playbackControl = new PlaybackControlPanel();
         pnlPlaybackControls.add(playbackControl);
@@ -148,8 +157,8 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         gridBagConstraints.weighty = 1.0;
         getContentPane().add(pnlFrequencySpectrum, gridBagConstraints);
 
-        pnlFrequencyHistory.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createTitledBorder("Frequency Spectrum History"), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 255, 255))));
-        pnlFrequencyHistory.setLayout(new java.awt.BorderLayout());
+        pnlFrequencyHistory.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createTitledBorder("Frequency Spectrum and Feature History"), javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 255, 255))));
+        pnlFrequencyHistory.setLayout(new java.awt.BorderLayout(0, 5));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -286,6 +295,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     
     private WaveformRenderPanel           renderWaveform;
     private FrequencySpectrumRenderPanel  renderFrequencySpectrum;
+    private FeatureHistoryRenderPanel     renderFeatureHistory;
     private FrequencySpectrumHistoryPanel renderFrequencyHistory;
     private PlaybackControlPanel          playbackControl;
 }
