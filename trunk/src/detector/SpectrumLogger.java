@@ -105,7 +105,7 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
             }
             
             SpectrumInfo info = analyser.getSpectrumInfo(0);
-            output.printf("%d", info.sampleIdx);
+            output.printf("%.3f", info.sampleIdx / 1000.0f);
             for ( int i = 0 ; i < info.intensity.length ; i++ )
             {
                 output.printf("\t%.3f", info.intensity[i]);

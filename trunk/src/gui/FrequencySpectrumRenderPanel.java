@@ -33,7 +33,7 @@ public class FrequencySpectrumRenderPanel
         strokeSignal     = new BasicStroke(1);
         
         setBackground(Color.black);
-        setForeground(Color.red);
+        setForeground(Color.white);
         
         this.analyser = analyser;
         analyser.registerListener(this);
