@@ -86,7 +86,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         // close old file first?
         closeSoundFile();
         
-        sound = minim.loadFile(file.getAbsolutePath(), 512);
+        sound = minim.loadFile(file.getAbsolutePath(), 256);
         analyser.attachToAudio(sound);
         logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
         logger.setEnabled(menuSettings_OutputData.isSelected());
