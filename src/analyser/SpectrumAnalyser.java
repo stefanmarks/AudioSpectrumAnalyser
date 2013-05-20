@@ -71,14 +71,16 @@ public class SpectrumAnalyser implements AudioListener
      */
     public void attachToAudio(AudioSource as)
     {
+        as.addListener(this);
+        
         // calculate minimum buffer size 
         // to reliably measure a whole phase of a specific minimum frequency
         float rate = as.sampleRate();
         float minFreq = 20;
         int   minBufferSize = 1 << (int) (Math.log(rate / minFreq) / Math.log(2));
         LOG.log(Level.INFO, 
-                "Attached to sound source (Sample Rate {0}, FFT Buffer size {1})", 
-                new Object[] {rate, minBufferSize});
+                "Attached to sound source (Sample Rate {0}, Playback buffer size {1}, FFT Buffer size {2})", 
+                new Object[] {rate, as.bufferSize(), minBufferSize});
         
         dataRawL = new float[minBufferSize];
         dataFftL = new float[minBufferSize];
@@ -194,7 +196,7 @@ public class SpectrumAnalyser implements AudioListener
         System.arraycopy(dataRawR, sampR.length, dataRawR, 0, dataRawR.length - sampR.length);
         // copy samples into array for analysis
         System.arraycopy(sampL, 0, dataRawL, dataRawL.length - sampL.length, sampL.length); 
-        System.arraycopy(sampL, 0, dataRawR, dataRawR.length - sampR.length, sampR.length); 
+        System.arraycopy(sampR, 0, dataRawR, dataRawR.length - sampR.length, sampR.length); 
         // copy samples array into FFT array so values can be shaped by teh windows
         System.arraycopy(dataRawL, 0, dataFftL, 0, dataRawL.length);
         System.arraycopy(dataRawR, 0, dataFftR, 0, dataRawR.length); 
@@ -202,6 +204,7 @@ public class SpectrumAnalyser implements AudioListener
         if ( fft != null ) 
         {
             fft.forward(dataFftL);
+            
             synchronized(history)
             {      
                 history[historyIdx].sampleIdx = audioSource.position();
@@ -222,7 +225,7 @@ public class SpectrumAnalyser implements AudioListener
             // notify listeners
             for (Listener listener : listeners)
             {
-                listener.analysisUpdated(this);
+               listener.analysisUpdated(this);
             }
         }
     }
