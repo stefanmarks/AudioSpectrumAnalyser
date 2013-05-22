@@ -32,11 +32,11 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         initComponents();
         
-        analyser = new SpectrumAnalyser(2048);
+        analyser = new SpectrumAnalyser(200, 2048);
         logger   = new SpectrumLogger(analyser);
         
-        analyser.registerFeatureDetector(new SpikeFeatureDetector("Bass",  0, 20, 150));
-        //analyser.registerFeatureDetector(new SpikeFeatureDetector("Snare", 1, 2000, 7000));
+        analyser.registerFeatureDetector(new SpikeFeatureDetector("Bass",  0, 100, 150));
+        analyser.registerFeatureDetector(new SpikeFeatureDetector("Snare", 1, 2000, 7000));
         
         renderWaveform = new WaveformRenderPanel(analyser);
         pnlWaveform.add(renderWaveform);
@@ -59,7 +59,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
      
         setLocationRelativeTo(null);
         
-        openSoundFile(new File("data/Loop01.wav"));
+        openSoundFile(new File("data/Loop 02 - Amplifier - One Great Summer.wav"));
     }
 
     /**
@@ -86,7 +86,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         // close old file first?
         closeSoundFile();
         
-        sound = minim.loadFile(file.getAbsolutePath(), 256);
+        sound = minim.loadFile(file.getAbsolutePath());
         analyser.attachToAudio(sound);
         logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
         logger.setEnabled(menuSettings_OutputData.isSelected());
