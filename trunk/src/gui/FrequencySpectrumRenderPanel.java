@@ -80,6 +80,7 @@ public class FrequencySpectrumRenderPanel
         // draw signal
         if ( (spectrum != null) && spectrum.isDefined() )
         {   
+            Point mp = getMousePosition();
             xScale = getBounds().width / spectrum.intensity.length;
             g.setStroke(strokeSignal);
             for ( int i = 0 ; i < spectrum.intensity.length ; i++ )
@@ -91,7 +92,6 @@ public class FrequencySpectrumRenderPanel
                 r.height = getBounds().height;
                         
                 // check if mouse is within that rect 
-                Point mp = getMousePosition();
                 boolean selected = (mp != null) && r.contains(mp);
                 
                 // calculate real bar height based on intensity
