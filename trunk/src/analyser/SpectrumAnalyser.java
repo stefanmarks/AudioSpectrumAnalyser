@@ -33,10 +33,12 @@ public class SpectrumAnalyser implements AudioListener
     /**
      * Creates a new Spectrum Analyser instance.
      * 
-     * @param historySize  the size of the spectrum history
+     * @param analyseFrequency  the frequency in Hz for analysing the waveforms
+     * @param historySize       the size of the spectrum history
      */
-    public SpectrumAnalyser(int historySize)
+    public SpectrumAnalyser(int analyseFrequency, int historySize)
     {
+        this.analyseFrequency = analyseFrequency;
         audioSource = null;
         dataRawL = dataRawR = null; 
         fft = null;
@@ -73,24 +75,28 @@ public class SpectrumAnalyser implements AudioListener
     {
         as.addListener(this);
         
-        // calculate minimum buffer size 
-        // to reliably measure a whole phase of a specific minimum frequency
         float rate = as.sampleRate();
         float minFreq = 20;
-        int   minBufferSize = 1 << (int) (Math.log(rate / minFreq) / Math.log(2));
+        // calculate minimum FFT buffer size 
+        // to reliably measure a whole phase of a specific minimum frequency
+        int minFftBufferSize = 1 << (int) (Math.log(rate / minFreq) / Math.log(2));
+        // then add the sample buffer size
+        int inputBufferSize = minFftBufferSize + as.bufferSize();
         LOG.log(Level.INFO, 
-                "Attached to sound source (Sample Rate {0}, Playback buffer size {1}, FFT Buffer size {2})", 
-                new Object[] {rate, as.bufferSize(), minBufferSize});
+                "Attached to sound source (Sample Rate {0}, Playback buffer size {1}, FFT buffer size {2}, Total buffer size {3})", 
+                new Object[] {rate, as.bufferSize(), minFftBufferSize, inputBufferSize});
         
-        dataRawL = new float[minBufferSize];
-        dataFftL = new float[minBufferSize];
-        dataRawR = new float[minBufferSize];
-        dataFftR = new float[minBufferSize];
-        
-        fft = new FFT(minBufferSize, rate);
+        dataRawL = new float[inputBufferSize];
+        dataRawR = new float[inputBufferSize];
+        dataFftL = new float[minFftBufferSize];
+        dataFftR = new float[minFftBufferSize];
+        dataIdx     = inputBufferSize; // data enters from the end of the buffer
+        dataIdxStep = (int) (as.sampleRate() / analyseFrequency);
+                
+        fft = new FFT(minFftBufferSize, rate);
         fft.logAverages(100, 8);
         fft.window(new HannWindow());
-        audioSource = (Playable) as;
+        audioSource = as;
     }
     
     /**
@@ -189,7 +195,9 @@ public class SpectrumAnalyser implements AudioListener
     @Override
     public void samples(float[] sampL, float[] sampR)
     {
-        if ( (audioSource == null) || !audioSource.isPlaying() ) return;
+        if ( audioSource == null ) return;
+        Playable playable = (Playable) audioSource;
+        if ( !playable.isPlaying() ) return;
         
         // shift data in input arrays
         System.arraycopy(dataRawL, sampL.length, dataRawL, 0, dataRawL.length - sampL.length);
@@ -197,21 +205,30 @@ public class SpectrumAnalyser implements AudioListener
         // copy samples into array for analysis
         System.arraycopy(sampL, 0, dataRawL, dataRawL.length - sampL.length, sampL.length); 
         System.arraycopy(sampR, 0, dataRawR, dataRawR.length - sampR.length, sampR.length); 
-        // copy samples array into FFT array so values can be shaped by teh windows
-        System.arraycopy(dataRawL, 0, dataFftL, 0, dataRawL.length);
-        System.arraycopy(dataRawR, 0, dataFftR, 0, dataRawR.length); 
-
-        if ( fft != null ) 
+        // move back the analysis index
+        dataIdx -= sampL.length;
+        
+        // process as much data as possible
+        while ( dataIdx + fft.timeSize() < dataRawL.length )
         {
-            fft.forward(dataFftL);
+            // copy samples array into FFT array so values can be shaped by the windows
+            // without destroying the original samples
+            System.arraycopy(dataRawL, dataIdx, dataFftL, 0, dataFftL.length);
+            // System.arraycopy(dataRawR, dataIdx, dataFftR, 0, dataFftR.length); 
             
+            // do FFT
+            fft.forward(dataFftL);
+
+            // enter dataset into history
             synchronized(history)
             {      
-                history[historyIdx].sampleIdx = audioSource.position();
+                // calculate analysis offset to current playback position
+                int posOffset = (int) ((dataRawL.length - dataIdx) / audioSource.sampleRate() * 1000);
+                history[historyIdx].sampleIdx = playable.position() - posOffset;
                 history[historyIdx].copySpectrumData(fft);
                 historyIdx = (historyIdx + 1) % history.length;
             }
-            
+
             // run feature detectors
             for ( FeatureDetector featureDetector : featureDetectors )
             {
@@ -221,13 +238,16 @@ public class SpectrumAnalyser implements AudioListener
                     history[historyIdx].features |= featureDetector.getFeature().getBitmask();
                 }
             }
-            
+
             // notify listeners
             for (Listener listener : listeners)
             {
                listener.analysisUpdated(this);
             }
-        }
+            
+            // move analysis window forwards
+            dataIdx += dataIdxStep;
+        } 
     }
   
     /**
@@ -311,9 +331,11 @@ public class SpectrumAnalyser implements AudioListener
         return fft;
     }
 
-    private Playable             audioSource;
+    private AudioSource          audioSource;
     private float[]              dataRawL, dataRawR, dataFftL, dataFftR;
+    private int                  dataIdx, dataIdxStep;
     private FFT                  fft;
+    private int                  analyseFrequency;
     private final SpectrumInfo[] history;
     private int                  historyIdx;
     private Set<FeatureDetector> featureDetectors;

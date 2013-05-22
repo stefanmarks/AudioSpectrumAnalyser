@@ -51,7 +51,7 @@ public class SpikeFeatureDetector extends FeatureDetector
                 sum2 += si2.intensityRaw[idx]; // low attack
             }
             if ( (sum1 > sum0) && (sum1 > sum2) && 
-                 (sum1 - sum2) > (sum1 - sum0) && (sum1-sum2) > 2)
+                 (sum1 - sum2) > 5 )
             {
                 detected = true;
                 System.out.println(sum1-sum2);
