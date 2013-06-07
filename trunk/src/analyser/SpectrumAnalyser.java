@@ -90,13 +90,26 @@ public class SpectrumAnalyser implements AudioListener
         dataRawR = new float[inputBufferSize];
         dataFftL = new float[minFftBufferSize];
         dataFftR = new float[minFftBufferSize];
-        dataIdx     = inputBufferSize; // data enters from the end of the buffer
+        // data enters from the end of the buffer, so put index at end
+        dataIdx = inputBufferSize; 
+        // calculate sample steps for desired analysis frequency
         dataIdxStep = (int) (as.sampleRate() / analyseFrequency);
                 
         fft = new FFT(minFftBufferSize, rate);
         fft.logAverages(100, 8);
         fft.window(new HannWindow());
         audioSource = as;
+    }
+    
+    /**
+     * Checks if the analyser is attached to an audio stream.
+     * 
+     * @return <code>true</code> if the analyser is attached to an audio stream,
+     *         <code>false</code> if not
+     */
+    public boolean isAttachedToAudio()
+    {
+        return fft != null;
     }
     
     /**
@@ -277,7 +290,7 @@ public class SpectrumAnalyser implements AudioListener
      */
     public int getSpectrumBandCount()
     {
-        return fft.avgSize();
+        return (fft != null) ? fft.avgSize() : 0;
     }
     
     /**

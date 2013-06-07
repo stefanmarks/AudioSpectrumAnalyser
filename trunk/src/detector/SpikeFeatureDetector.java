@@ -54,7 +54,7 @@ public class SpikeFeatureDetector extends FeatureDetector
                  (sum1 - sum2) > 5 )
             {
                 detected = true;
-                System.out.println(sum1-sum2);
+                //System.out.println(sum1-sum2);
             }
         }
         return detected;

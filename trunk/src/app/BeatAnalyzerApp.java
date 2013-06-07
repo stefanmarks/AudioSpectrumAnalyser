@@ -85,12 +85,14 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         // close old file first?
         closeSoundFile();
-        
-        sound = minim.loadFile(file.getAbsolutePath());
-        analyser.attachToAudio(sound);
-        logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
-        logger.setEnabled(menuSettings_OutputData.isSelected());
-        playbackControl.attachToAudio(sound);
+        if ( file.exists() )
+        {
+            sound = minim.loadFile(file.getAbsolutePath());
+            analyser.attachToAudio(sound);
+            logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
+            logger.setEnabled(menuSettings_OutputData.isSelected());
+            playbackControl.attachToAudio(sound);
+        }
     }
     
     /**
@@ -269,12 +271,13 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
      */
     public static void main(String args[])
     {
+        final BeatAnalyzerApp app = new BeatAnalyzerApp();
         java.awt.EventQueue.invokeLater(new Runnable()
         {
             @Override
             public void run()
             {
-                new BeatAnalyzerApp().setVisible(true);
+                app.setVisible(true);
             }
         });
     }
