@@ -47,6 +47,9 @@ public class FeatureHistoryRenderPanel
         Rectangle  bounds = getBounds();
         g.setColor(getBackground());
         g.fillRect(0, 0, bounds.width, bounds.height);
+        
+        if ( !analyser.isAttachedToAudio() ) return;
+        
         g.setColor(getForeground());
         // draw features
         List<Feature> features = analyser.getDetectedFeatures();

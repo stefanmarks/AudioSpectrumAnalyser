@@ -53,6 +53,9 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         Rectangle  bounds = getBounds();
         g.setColor(getBackground());
         g.fillRect(0, 0, bounds.width, bounds.height);
+        
+        if ( !analyser.isAttachedToAudio() ) return;
+                
         // draw signal
         int ySteps = analyser.getSpectrumBandCount();
         for ( int x = 0 ; x < analyser.getHistorySize() ; x++ )
