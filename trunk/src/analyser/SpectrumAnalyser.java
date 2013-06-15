@@ -73,18 +73,19 @@ public class SpectrumAnalyser implements AudioListener
      */
     public void attachToAudio(AudioSource as)
     {
-        as.addListener(this);
+        audioSource = as;
+        audioSource.addListener(this);
         
-        float rate = as.sampleRate();
+        float rate = audioSource.sampleRate();
         float minFreq = 20;
         // calculate minimum FFT buffer size 
         // to reliably measure a whole phase of a specific minimum frequency
         int minFftBufferSize = 1 << (int) (Math.log(rate / minFreq) / Math.log(2));
         // then add the sample buffer size
-        int inputBufferSize = minFftBufferSize + as.bufferSize();
+        int inputBufferSize = minFftBufferSize + audioSource.bufferSize();
         LOG.log(Level.INFO, 
                 "Attached to sound source (Sample Rate {0}, Playback buffer size {1}, FFT buffer size {2}, Total buffer size {3})", 
-                new Object[] {rate, as.bufferSize(), minFftBufferSize, inputBufferSize});
+                new Object[] {rate, audioSource.bufferSize(), minFftBufferSize, inputBufferSize});
         
         dataRawL = new float[inputBufferSize];
         dataRawR = new float[inputBufferSize];
@@ -93,12 +94,11 @@ public class SpectrumAnalyser implements AudioListener
         // data enters from the end of the buffer, so put index at end
         dataIdx = inputBufferSize; 
         // calculate sample steps for desired analysis frequency
-        dataIdxStep = (int) (as.sampleRate() / analyseFrequency);
+        dataIdxStep = (int) (audioSource.sampleRate() / analyseFrequency);
                 
         fft = new FFT(minFftBufferSize, rate);
         fft.logAverages(100, 8);
         fft.window(new HannWindow());
-        audioSource = as;
     }
     
     /**

@@ -1,12 +1,17 @@
 package gui;
 
+import ddf.minim.AudioListener;
+import ddf.minim.AudioPlayer;
 import ddf.minim.Playable;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.TimerTask;
 import java.util.Timer;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
@@ -15,7 +20,9 @@ import javax.swing.event.ChangeListener;
  * @author  Stefan Marks
  * @version 1.0 - 15.05.2013: Created
  */
-public class PlaybackControlPanel extends javax.swing.JPanel
+public class PlaybackControlPanel 
+    extends JPanel
+    implements AudioListener
 {
     private static final int STEPS_PER_SECOND = 10;
     
@@ -28,23 +35,6 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         
         source = null;
         updateControls();
-        
-        TimerTask t = new TimerTask() {
-            @Override
-            public void run()
-            {
-                if ( (source != null) && source.isPlaying() )
-                {
-                    updateFromPlayback = true;
-                    int pos = source.position();
-                    sldTime.setValue(pos * STEPS_PER_SECOND / 1000);
-                    lblTimecode.setText(String.format("%04d.%03d", pos / 1000, pos % 1000));
-                    updateFromPlayback = false;
-                } 
-            }  
-        };
-        updateTimer = new Timer();
-        updateTimer.scheduleAtFixedRate(t, 100, 100);        
         sldTime.addChangeListener(new SliderChangeListener());
     }
 
@@ -56,6 +46,8 @@ public class PlaybackControlPanel extends javax.swing.JPanel
     public void attachToAudio(Playable playable)
     {
         this.source = playable;
+        ((AudioPlayer) source).addListener(this);
+        
         int len = source.length();
         sldTime.setMaximum(len * STEPS_PER_SECOND / 1000);
         sldTime.setValue(0);
@@ -82,6 +74,7 @@ public class PlaybackControlPanel extends javax.swing.JPanel
      */
     public void detachFromAudio()
     {
+        ((AudioPlayer) source).removeListener(this);
         this.source = null;
         updateControls();
         sldTime.setValue(0);
@@ -91,9 +84,18 @@ public class PlaybackControlPanel extends javax.swing.JPanel
     private void updateControls()
     {
         btnRewind.setEnabled(source != null);
-        btnPlay.setVisible((source != null) && !source.isPlaying());
+        btnPlay.setVisible((source == null) || !source.isPlaying());
+        btnPlay.setEnabled((source != null) && !source.isPlaying());
         btnStop.setVisible((source != null) && source.isPlaying());
+        
+        btnLoop.setIcon(pauseIcon[btnLoop.isSelected() ? 1 : 0]);
+        
         sldTime.setEnabled(source != null);
+    }
+    
+    public boolean isLooping()
+    {
+        return btnLoop.isSelected();
     }
     
     /**
@@ -112,6 +114,11 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         btnRewind = new javax.swing.JButton();
         btnPlay = new javax.swing.JButton();
         btnStop = new javax.swing.JButton();
+        pauseIcon = new ImageIcon[2];
+        pauseIcon[0] = new ImageIcon(getClass().getResource("/gui/icons/loop.png"));
+        pauseIcon[1] = new ImageIcon(getClass().getResource("/gui/icons/loop_on.png"));
+
+        btnLoop = new javax.swing.JToggleButton();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -124,11 +131,13 @@ public class PlaybackControlPanel extends javax.swing.JPanel
 
         pnlButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
 
-        lblTimecode.setFont(new java.awt.Font("Courier New", 0, 18)); // NOI18N
+        lblTimecode.setFont(new java.awt.Font("Courier New", 1, 24)); // NOI18N
         lblTimecode.setText("0000:000");
         pnlButtons.add(lblTimecode);
 
-        btnRewind.setText("|<");
+        btnRewind.setIcon(new javax.swing.ImageIcon(getClass().getResource("/gui/icons/rewind.png"))); // NOI18N
+        btnRewind.setToolTipText("Rewind");
+        btnRewind.setMargin(new java.awt.Insets(3, 3, 3, 3));
         btnRewind.addActionListener(new java.awt.event.ActionListener()
         {
             public void actionPerformed(java.awt.event.ActionEvent evt)
@@ -138,7 +147,9 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         });
         pnlButtons.add(btnRewind);
 
-        btnPlay.setText(">");
+        btnPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/gui/icons/play.png"))); // NOI18N
+        btnPlay.setToolTipText("Play");
+        btnPlay.setMargin(new java.awt.Insets(3, 3, 3, 3));
         btnPlay.addActionListener(new java.awt.event.ActionListener()
         {
             public void actionPerformed(java.awt.event.ActionEvent evt)
@@ -148,7 +159,9 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         });
         pnlButtons.add(btnPlay);
 
-        btnStop.setText("||");
+        btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/gui/icons/pause.png"))); // NOI18N
+        btnStop.setToolTipText("Pause");
+        btnStop.setMargin(new java.awt.Insets(3, 3, 3, 3));
         btnStop.addActionListener(new java.awt.event.ActionListener()
         {
             public void actionPerformed(java.awt.event.ActionEvent evt)
@@ -157,6 +170,18 @@ public class PlaybackControlPanel extends javax.swing.JPanel
             }
         });
         pnlButtons.add(btnStop);
+
+        btnLoop.setIcon(pauseIcon[0]);
+        btnLoop.setToolTipText("Loop the audio");
+        btnLoop.setMargin(new java.awt.Insets(3, 3, 3, 3));
+        btnLoop.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                btnLoopActionPerformed(evt);
+            }
+        });
+        pnlButtons.add(btnLoop);
 
         add(pnlButtons, java.awt.BorderLayout.PAGE_END);
     }// </editor-fold>//GEN-END:initComponents
@@ -169,7 +194,7 @@ public class PlaybackControlPanel extends javax.swing.JPanel
 
     private void btnPlayPressed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPlayPressed
     {//GEN-HEADEREND:event_btnPlayPressed
-        source.play(sldTime.getValue() * 1000 / STEPS_PER_SECOND);
+        source.play();
         updateControls();
     }//GEN-LAST:event_btnPlayPressed
 
@@ -179,7 +204,13 @@ public class PlaybackControlPanel extends javax.swing.JPanel
         updateControls();
     }//GEN-LAST:event_btnStopPressed
 
+    private void btnLoopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnLoopActionPerformed
+    {//GEN-HEADEREND:event_btnLoopActionPerformed
+        updateControls();
+    }//GEN-LAST:event_btnLoopActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JToggleButton btnLoop;
     private javax.swing.JButton btnPlay;
     private javax.swing.JButton btnRewind;
     private javax.swing.JButton btnStop;
@@ -187,25 +218,68 @@ public class PlaybackControlPanel extends javax.swing.JPanel
     private javax.swing.JSlider sldTime;
     // End of variables declaration//GEN-END:variables
 
-    private class SliderChangeListener implements ChangeListener
+    @Override
+    public void samples(float[] samp)
     {
-        @Override
-        public void stateChanged(javax.swing.event.ChangeEvent evt)
+        samples(samp, samp);
+    }
+
+    @Override
+    public void samples(float[] sampL, float[] sampR)
+    {
+        updateFromPlayback = true;
+        int pos = source.position();
+        sldTime.setValue(pos * STEPS_PER_SECOND / 1000);
+        lblTimecode.setText(
+                String.format("%04d.%03d", 
+                pos / 1000, pos % 1000));
+        updateFromPlayback = false;
+
+        if ( source.position() == source.length() )
         {
-            if ( updateFromPlayback ) return;
-            int pos = sldTime.getValue() * 1000 / STEPS_PER_SECOND;
-            if ( source != null )
+            // end of song reached
+            if ( isLooping() )
             {
-                if ( source.isPlaying() ) source.play(pos);
-                else                      source.skip(pos - source.position());
+                source.play(0);
+            }
+            else
+            {
+                sldTime.setValue(0);
+                updateControls();
             }
         }
     }
 
-    Playable source;
-    Timer    updateTimer;
-    boolean  updateFromPlayback; 
+    private class SliderChangeListener implements ChangeListener
+    {
+        @Override
+        public void stateChanged(ChangeEvent evt)
+        {
+            if ( updateFromPlayback ) return; // prevent infinte loop
+
+            int pos = sldTime.getValue() * 1000 / STEPS_PER_SECOND;
+            if ( source != null )
+            {
+                if ( source.isPlaying() )
+                {
+                    // moved while playing: play from new position
+                    source.play(pos);
+                }
+                else                   
+                {
+                    // moved in pause mode: prepare new start position
+                    source.cue(pos);
+                }
+            }
+        }
+    }
+
+    private Playable source;
+    private Timer    updateTimer;
+    private boolean  updateFromPlayback; 
     
-    final int[] majTicks = {10, 60, 120, 240, 300, 600, 1200};
-    final int[] minTicks = { 1,  5,  10,  20,  30,  60,  120};
+    private ImageIcon[] pauseIcon;        
+    
+    private final int[] majTicks = {5, 10, 60, 120, 240, 300, 600, 1200};
+    private final int[] minTicks = {1,  1,  5,  10,  20,  30,  60,  120};
 }

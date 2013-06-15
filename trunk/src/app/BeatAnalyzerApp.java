@@ -4,15 +4,20 @@ import gui.FrequencySpectrumHistoryPanel;
 import gui.FrequencySpectrumRenderPanel;
 import gui.PlaybackControlPanel;
 import analyser.SpectrumAnalyser;
-import output.SpectrumLogger;
+import output.FileSpectrumOutputModule;
 import gui.WaveformRenderPanel;
 import ddf.minim.*;
 import detector.SpikeFeatureDetector;
 import gui.FeatureHistoryRenderPanel;
+import gui.PreferencesDialog;
 import java.awt.BorderLayout;
 import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import output.NetworkSpectrumOutputModule;
+import output.OutputModule;
 import processing.core.PApplet;
 
 /**
@@ -20,10 +25,11 @@ import processing.core.PApplet;
  * 
  * @author Stefan Marks
  * @version 1.0 - 15.05.2013: Created
+ * @version 1.2 - 15.06.2013: Added Preferences Dialog and Network logger
  */
 public class BeatAnalyzerApp extends javax.swing.JFrame
 {
-    private static final String VERSION_NO = "1.1";
+    private static final String VERSION_NO = "1.2";
     
     /**
      * Creates new form BeatAnalyzerApp
@@ -32,8 +38,13 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         initComponents();
         
-        analyser = new SpectrumAnalyser(200, 2048);
-        logger   = new SpectrumLogger(analyser);
+        analyser      = new SpectrumAnalyser(200, 2048);
+        
+        outputModules = new LinkedList<>();
+        fileOutput    = new FileSpectrumOutputModule(analyser);
+        networkOutput = new NetworkSpectrumOutputModule(analyser);
+        outputModules.add(fileOutput);
+        outputModules.add(networkOutput);
         
         analyser.registerFeatureDetector(new SpikeFeatureDetector("Bass",  0, 100, 150));
         analyser.registerFeatureDetector(new SpikeFeatureDetector("Snare", 1, 2000, 7000));
@@ -57,9 +68,12 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         minim = new Minim(p);
         sound = null;
      
+        preferences = new PreferencesDialog(this);
+        loadPreferences();
+        
         setLocationRelativeTo(null);
         
-        openSoundFile(new File("data/Loop 02 - Amplifier - One Great Summer.wav"));
+        openSoundFile(new File("data/Loop 02 - Amplifier - One Great Summer 10s.wav"));
     }
 
     /**
@@ -85,13 +99,32 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         // close old file first?
         closeSoundFile();
+        // ope new file
         if ( file.exists() )
         {
-            sound = minim.loadFile(file.getAbsolutePath());
-            analyser.attachToAudio(sound);
-            logger.openLogfile(new File(file.getAbsolutePath() + ".log"));
-            logger.setEnabled(menuSettings_OutputData.isSelected());
-            playbackControl.attachToAudio(sound);
+            try
+            {
+                sound = minim.loadFile(file.getAbsolutePath());
+            
+                analyser.attachToAudio(sound);
+                playbackControl.attachToAudio(sound);
+
+                for ( OutputModule outputModule : outputModules )
+                {
+                    outputModule.audioFileOpened(file);
+                }
+
+                loadPreferences();
+                menuFileClose.setEnabled(true);
+            }
+            catch (Exception e)
+            {
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "Could not open the audio File!",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     
@@ -103,11 +136,30 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         if ( sound != null )
         {
             analyser.detachFromAudio();
-            logger.closeLogfile();                    
             playbackControl.detachFromAudio();
+            
+            for ( OutputModule outputModule : outputModules )
+            {
+                outputModule.audioFileClosed();
+            }                    
+            
             sound.close();
             sound = null;
+            
+            menuFileClose.setEnabled(false);
         }
+    }
+    
+    private void loadPreferences()
+    {
+        preferences.loadFileOutputSettings(fileOutput);
+        preferences.loadNetworkOutputSettings(networkOutput);
+    }
+    
+    private void applyPreferences()
+    {
+        preferences.applyFileOutputSettings(fileOutput);
+        preferences.applyNetworkOutputSettings(networkOutput);
     }
     
     /**
@@ -128,9 +180,10 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu menuFile = new javax.swing.JMenu();
         javax.swing.JMenuItem menuFileOpen = new javax.swing.JMenuItem();
+        menuFileClose = new javax.swing.JMenuItem();
         javax.swing.JMenuItem menuFileQuit = new javax.swing.JMenuItem();
         javax.swing.JMenu menuSettings = new javax.swing.JMenu();
-        menuSettings_OutputData = new javax.swing.JCheckBoxMenuItem();
+        javax.swing.JMenuItem menuSettings_Preferences = new javax.swing.JMenuItem();
         javax.swing.JMenu menuHelp = new javax.swing.JMenu();
         javax.swing.JMenuItem menuHelpAbout = new javax.swing.JMenuItem();
 
@@ -193,6 +246,17 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         });
         menuFile.add(menuFileOpen);
 
+        menuFileClose.setText("Close File");
+        menuFileClose.setEnabled(false);
+        menuFileClose.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                menuFileCloseActionPerformed(evt);
+            }
+        });
+        menuFile.add(menuFileClose);
+
         menuFileQuit.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, java.awt.event.InputEvent.ALT_MASK));
         menuFileQuit.setText("Quit");
         menuFileQuit.addActionListener(new java.awt.event.ActionListener()
@@ -208,15 +272,15 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
 
         menuSettings.setText("Settings");
 
-        menuSettings_OutputData.setText("Create Data File from Sound");
-        menuSettings_OutputData.addActionListener(new java.awt.event.ActionListener()
+        menuSettings_Preferences.setText("Preferences");
+        menuSettings_Preferences.addActionListener(new java.awt.event.ActionListener()
         {
             public void actionPerformed(java.awt.event.ActionEvent evt)
             {
-                menuSettings_OutputDataActionPerformed(evt);
+                menuSettings_PreferencesActionPerformed(evt);
             }
         });
-        menuSettings.add(menuSettings_OutputData);
+        menuSettings.add(menuSettings_Preferences);
 
         menuBar.add(menuSettings);
 
@@ -261,10 +325,23 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
             "Auckland University of Technology, New Zealand");
     }//GEN-LAST:event_menuHelpAboutActionPerformed
 
-    private void menuSettings_OutputDataActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuSettings_OutputDataActionPerformed
-    {//GEN-HEADEREND:event_menuSettings_OutputDataActionPerformed
-        logger.setEnabled(menuSettings_OutputData.isSelected());
-    }//GEN-LAST:event_menuSettings_OutputDataActionPerformed
+    private void menuSettings_PreferencesActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuSettings_PreferencesActionPerformed
+    {//GEN-HEADEREND:event_menuSettings_PreferencesActionPerformed
+        PreferencesDialog.UserChoice choice = preferences.showDialog();
+        if ( choice == PreferencesDialog.UserChoice.ACCEPT )
+        {
+            applyPreferences();
+        }            
+        else
+        {
+            loadPreferences();
+        }
+    }//GEN-LAST:event_menuSettings_PreferencesActionPerformed
+
+    private void menuFileCloseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileCloseActionPerformed
+    {//GEN-HEADEREND:event_menuFileCloseActionPerformed
+        closeSoundFile();
+    }//GEN-LAST:event_menuFileCloseActionPerformed
 
     /**
      * @param args the command line arguments
@@ -284,17 +361,22 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar menuBar;
-    private javax.swing.JCheckBoxMenuItem menuSettings_OutputData;
+    private javax.swing.JMenuItem menuFileClose;
     private javax.swing.JPanel pnlFrequencyHistory;
     private javax.swing.JPanel pnlFrequencySpectrum;
     private javax.swing.JPanel pnlPlaybackControls;
     private javax.swing.JPanel pnlWaveform;
     // End of variables declaration//GEN-END:variables
 
-    private Minim            minim;
-    private AudioPlayer      sound;
-    private SpectrumAnalyser analyser;
-    private SpectrumLogger   logger;
+    private Minim                 minim;
+    private AudioPlayer           sound;
+    private SpectrumAnalyser      analyser;
+    
+    private List<OutputModule>            outputModules;
+    private FileSpectrumOutputModule      fileOutput;
+    private NetworkSpectrumOutputModule   networkOutput;
+    
+    private PreferencesDialog             preferences;
     
     private WaveformRenderPanel           renderWaveform;
     private FrequencySpectrumRenderPanel  renderFrequencySpectrum;

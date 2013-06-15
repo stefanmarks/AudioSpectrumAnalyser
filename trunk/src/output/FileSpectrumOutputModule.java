@@ -13,77 +13,78 @@ import java.io.PrintStream;
  * @author  Stefan Marks
  * @version 1.0 - 14.05.2013: Created
  */
-public class SpectrumLogger implements SpectrumAnalyser.Listener
+public class FileSpectrumOutputModule implements OutputModule
 {
     /**
      * Creates a spectrum information logger.
      * 
      * @param analyser the spectrum analyser to attach to
      */
-    public SpectrumLogger(SpectrumAnalyser analyser)
+    public FileSpectrumOutputModule(SpectrumAnalyser analyser)
     {
         outputFile    = null;
         output        = null;
         headerPrinted = false;
-        enabled       = true;
+        enabled       = false;
         analyser.registerListener(this);
     }
     
-    /**
-     * Opens a spectrum logfile.
-     * Any file with th same name will be overwritten.
-     * 
-     * @param file  the file to open
-     */
-    public void openLogfile(File file) 
+    @Override
+    public String getName()
     {
-        outputFile    = file;
-        headerPrinted = false;
-    }
-    
-    /**
-     * Closes the spectrum logfile.
-     */
-    public void closeLogfile()
-    {
-        if ( output != null )
+        String name = "Spectrum File Output";
+        if ( outputFile != null ) 
         {
-            output.close();
-            output = null;
-        }        
+            name += " (" + outputFile + ")";
+        }
+        return name;
     }
     
-    /**
-     * Checks if the logger is enabled.
-     * 
-     * @return <code>true</code> if the logger is enabled, 
-     *         <code>false</code> if not
-     */
+    @Override
     public boolean isEnabled()
     {
         return enabled;
     }
     
-    /**
-     * Enables or disables the logger.
-     * 
-     * @param enabled  <code>true</code> to enable the logger, 
-     *                 <code>false</code> to disable
-     */
+    @Override
     public void setEnabled(boolean enabled)
     {
         this.enabled = enabled;
+        if ( !enabled )
+        {
+            closeFile();
+        }
+    } 
+    
+    public String getOutputFilename()
+    {
+        return (outputFile != null) ? outputFile.getAbsolutePath() : "";
     }
-            
+    
+    public void setOutputFilename(String filename)
+    {
+        outputFile = new File(filename);
+        headerPrinted = false;
+    }
     
     @Override
-    public void analysisUpdated(SpectrumAnalyser analyser)
+    public void audioFileOpened(File file) 
     {
-        if ( !enabled ) return;
-        
+        setOutputFilename(file.getAbsolutePath() + ".txt");
+    }
+    
+    @Override
+    public void audioFileClosed()
+    {
+        closeFile();
+    }
+    
+    private void ensureFileIsOpen()
+    {
         if ( output == null )
         {
-            try {
+            try
+            {
                 output = new PrintStream(outputFile);
             }
             catch (FileNotFoundException e)
@@ -91,6 +92,24 @@ public class SpectrumLogger implements SpectrumAnalyser.Listener
                 enabled = false;
             }
         }
+    }
+    
+    
+    private void closeFile()
+    {
+        if ( output != null )
+        {
+            output.close();
+            output = null;
+        } 
+    }
+    
+    @Override
+    public void analysisUpdated(SpectrumAnalyser analyser)
+    {
+        if ( !enabled ) return;
+        
+        ensureFileIsOpen();
         
         if ( output != null )
         {
