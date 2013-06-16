@@ -95,7 +95,7 @@ public class FrequencySpectrumRenderPanel
                 boolean selected = (mp != null) && r.contains(mp);
                 
                 // calculate real bar height based on intensity
-                final float maxSI = 5;
+                final float maxSI = SpectrumInfo.MAX_SPECTRUM;
                 float si = spectrum.intensity[i];
                 r.height = (int) (yScale * si / maxSI);
                 r.y = yPos - r.height;

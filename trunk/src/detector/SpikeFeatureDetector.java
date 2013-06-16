@@ -19,46 +19,102 @@ public class SpikeFeatureDetector extends FeatureDetector
      * @param bitNum    the feature bit number to set
      * @param freqLow   the lower end of the spectrum to observe
      * @param freqHigh  the upper end of the spectrum to observe
+     * @param peakSize  the number of samples necessary to be above the average
+     * @param avgSize   the number of samples to average
      */
-    public SpikeFeatureDetector(String name, int bitNum, float freqLow, float freqHigh)
+    public SpikeFeatureDetector(String name, int bitNum, float freqLow, float freqHigh, int peakSize, int avgSize)
     {
         super(new Feature(name, bitNum));
         this.freqLow  = freqLow;
         this.freqHigh = freqHigh;
+       
+        specIdxFrom = -1;
+        specIdxTo   = -1;
+        info     = new SpectrumInfo[peakSize + avgSize];
+        sum      = new float[info.length];
+        this.peakSize = peakSize;
+    }
+    
+    private void determineSpectrumIndices(FFT fft)
+    {
+        if ( specIdxFrom < 0 )
+        {
+            specIdxFrom = fft.freqToIndex(freqLow);
+            specIdxTo   = fft.freqToIndex(freqHigh);
+            specCount   = 1 + specIdxTo - specIdxFrom;
+            System.out.println(
+                "Spike Feature detector '" + getFeature().getName() + 
+                "': analysing spectrum indices " + specIdxFrom + " to " + specIdxTo);
+        }
     }
     
     @Override
     public boolean detectFeature(SpectrumAnalyser analyser)
     {
         boolean detected = false;
-        // what spectrum index is the watch frequency range?
-        FFT fft = analyser.getFFT();
-        int specIdxFrom = fft.freqToIndex(freqLow);
-        int specIdxTo   = fft.freqToIndex(freqHigh);
-        // compare current and previous spectrum intensities
-        SpectrumInfo si0 = analyser.getSpectrumInfo(0);
-        SpectrumInfo si1 = analyser.getSpectrumInfo(1);
-        SpectrumInfo si2 = analyser.getSpectrumInfo(2);
-        if ( (si0 != null) && (si1 != null) && (si2 != null) )
+        
+        // get current and previous spectrum intensities
+        boolean allDefined = true;
+        for ( int i = 0 ; i < info.length ; i++ )
         {
-            float sum0 = 0;
-            float sum1 = 0;
-            float sum2 = 0;
-            for ( int idx = specIdxFrom ; idx <= specIdxTo ; idx++ )
+            info[i] = analyser.getSpectrumInfo(i);
+            if ( info[i] == null ) 
             {
-                sum0 += si0.intensityRaw[idx]; // sustain?
-                sum1 += si1.intensityRaw[idx]; // peak?
-                sum2 += si2.intensityRaw[idx]; // low attack
+                // all info entries must be non-null for the next part of the analysis
+                allDefined = false;
             }
-            if ( (sum1 > sum0) && (sum1 > sum2) && 
-                 (sum1 - sum2) > 5 )
+        }
+        
+        // did we get all the spectrum info?
+        if ( allDefined )
+        {
+            // what spectrum index is the watch frequency range?
+            determineSpectrumIndices(analyser.getFFT());
+
+            // calculate sums
+            for ( int iIdx = 0 ; iIdx < info.length ; iIdx++ )
             {
-                detected = true;
-                //System.out.println(sum1-sum2);
+                SpectrumInfo si = info[iIdx];
+                sum[iIdx] = 0.0f;        
+                for ( int sIdx = specIdxFrom ; sIdx <= specIdxTo ; sIdx++ )
+                {
+                    sum[iIdx] += si.intensityRaw[sIdx];
+                }
+                sum[iIdx] /= specCount;
             }
+            
+            // calculate average
+            float avg = 0;
+            for ( int i = peakSize ; i < sum.length ; i++ )
+            {
+                avg += sum[i];
+            }
+            avg /= sum.length - peakSize;
+            
+            int aboveCount = 0;
+            float peakSum = 0;
+            for ( int i = 0 ; i < peakSize ; i++ )
+            {
+                peakSum += sum[i];
+                if ( sum[i] > avg ) { aboveCount++; }
+            }
+            peakSum /= peakSize;
+            detected = (peakSum > 1.1 * avg) &&
+                       (aboveCount > peakSize * 4 / 5);
         }
         return detected;
     }
-
-    private float freqLow, freqHigh;
+    
+    @Override
+    public int getDetectionDelay()
+    {
+        return peakSize; 
+    }
+    
+    private float          freqLow, freqHigh;
+    private int            specIdxFrom, specIdxTo, specCount;
+    private SpectrumInfo[] info;
+    private float[]        sum;
+    private int            peakSize;
+    
 }

@@ -11,6 +11,8 @@ import detector.Feature;
  */
 public class SpectrumInfo 
 {
+    public static final float MAX_SPECTRUM = 1.0f;
+    
     /**
      * Creates a new spectrum information instance.
      */
@@ -22,23 +24,32 @@ public class SpectrumInfo
     /**
      * Copies spectrum analysis data from an FFT analyser.
      * 
-     * @param fft  the FFT analyser to use
+     * @param pos      the position in the audio file
+     * @param analyser the spectrum analyser
      */
-    public void copySpectrumData(FFT fft)
+    public void copySpectrumData(int pos, SpectrumAnalyser analyser)
     {
+        FFT fft          = analyser.getFFT();
         int spectrumSize = fft.avgSize();
+       
         if ( (intensity == null) || (intensity.length != spectrumSize) )
         {
             intensity    = new float[spectrumSize];
             intensityRaw = new float[fft.specSize()];
         }
+        
+        sampleIdx = pos;
+        features  = 0;
+        
+        SpectrumShaper shaper = analyser.getSpectrumShaper();
+        float scale = MAX_SPECTRUM / fft.specSize() * 2;
         for (int i = 0; i < spectrumSize; i++)
         {
-            intensity[i] = (float) Math.log(1 + fft.getAvg(i));
+            intensity[i] = shaper.shape(fft.getAvg(i) * scale);
         }
         for (int i = 0; i < fft.specSize(); i++)
         {
-            intensityRaw[i] = (float) Math.log(1 + fft.getBand(i));
+            intensityRaw[i] = shaper.shape(fft.getBand(i) * scale);
         }
     }
     

@@ -96,9 +96,30 @@ public class SpectrumAnalyser implements AudioListener
         // calculate sample steps for desired analysis frequency
         dataIdxStep = (int) (audioSource.sampleRate() / analyseFrequency);
                 
-        fft = new FFT(minFftBufferSize, rate);
+        fft = new MaxFFT(minFftBufferSize, rate);
         fft.logAverages(100, 8);
         fft.window(new HannWindow());
+        shaper = SpectrumShaper.LOGARITHMIC;
+    }
+    
+    /**
+     * Gets the spectrum shaper.
+     * 
+     * @return the spectrum shaper
+     */
+    public SpectrumShaper getSpectrumShaper()
+    {
+        return shaper;
+    }
+    
+    /**
+     * Sets the spectrum shaper.
+     * 
+     * @param shaper  the new spectrum shaper
+     */
+    public void setSpectrumShaper(SpectrumShaper shaper)
+    {
+        this.shaper = shaper;
     }
     
     /**
@@ -222,7 +243,7 @@ public class SpectrumAnalyser implements AudioListener
         dataIdx -= sampL.length;
         
         // process as much data as possible
-        while ( dataIdx + fft.timeSize() < dataRawL.length )
+        while ( dataIdx + fft.timeSize() <= dataRawL.length )
         {
             // copy samples array into FFT array so values can be shaped by the windows
             // without destroying the original samples
@@ -237,9 +258,8 @@ public class SpectrumAnalyser implements AudioListener
             {      
                 // calculate analysis offset to current playback position
                 int posOffset = (int) ((dataRawL.length - dataIdx) / audioSource.sampleRate() * 1000);
-                history[historyIdx].sampleIdx = playable.position() - posOffset;
-                history[historyIdx].copySpectrumData(fft);
-                historyIdx = (historyIdx + 1) % history.length;
+                int pos       = playable.position() - posOffset;
+                history[historyIdx].copySpectrumData(pos, this);
             }
 
             // run feature detectors
@@ -247,8 +267,14 @@ public class SpectrumAnalyser implements AudioListener
             {
                 if ( featureDetector.detectFeature(this) )
                 {
-                    // feature detected: set bit
-                    history[historyIdx].features |= featureDetector.getFeature().getBitmask();
+                    // feature detected: set bit in corresponding history item
+                    int featureIdx = historyIdx - featureDetector.getDetectionDelay();
+                    if ( featureIdx < 0 ) 
+                    {
+                        featureIdx += history.length;
+                    }
+                    
+                    history[featureIdx].features |= featureDetector.getFeature().getBitmask();
                 }
             }
 
@@ -258,7 +284,8 @@ public class SpectrumAnalyser implements AudioListener
                listener.analysisUpdated(this);
             }
             
-            // move analysis window forwards
+            // move analysis window and history index forwards
+            historyIdx = (historyIdx + 1) % history.length;
             dataIdx += dataIdxStep;
         } 
     }
@@ -348,6 +375,7 @@ public class SpectrumAnalyser implements AudioListener
     private float[]              dataRawL, dataRawR, dataFftL, dataFftR;
     private int                  dataIdx, dataIdxStep;
     private FFT                  fft;
+    private SpectrumShaper       shaper;
     private int                  analyseFrequency;
     private final SpectrumInfo[] history;
     private int                  historyIdx;
