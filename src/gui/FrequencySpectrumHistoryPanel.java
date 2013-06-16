@@ -49,6 +49,8 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
     @Override
     protected void paintComponent(Graphics graphics)
     {
+        final float maxSI = SpectrumInfo.MAX_SPECTRUM;
+                
         Graphics2D g = (Graphics2D) graphics;
         Rectangle  bounds = getBounds();
         g.setColor(getBackground());
@@ -57,15 +59,16 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         if ( !analyser.isAttachedToAudio() ) return;
                 
         // draw signal
+        int xSize  = Math.min(bounds.width, analyser.getHistorySize());
         int ySteps = analyser.getSpectrumBandCount();
-        for ( int x = 0 ; x < analyser.getHistorySize() ; x++ )
+        for ( int x = 0 ; x < xSize ; x++ )
         {   
             SpectrumInfo info = analyser.getSpectrumInfo(x);
             if ( info == null ) break;
             
             for ( int i = 0; i < info.intensity.length; i++ )
             {
-                g.setColor(RainbowColourMap.getColor(info.intensity[i], 0, 6));
+                g.setColor(RainbowColourMap.getColor(info.intensity[i], 0, maxSI));
                 g.drawLine(x, i * bounds.height / info.intensity.length, x, getBounds().height);
             }
         }   
@@ -75,19 +78,19 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         if ( mp != null )
         {
             int idx   = mp.y * ySteps / bounds.height;
-            int y     = idx * bounds.height / ySteps;
+            int y     = (int) ((idx + 0.5f) * bounds.height / ySteps);
             int yBase = bounds.height - 1;
-            // draw red horizontal line for teh band selection
+            // draw red horizontal line for the band selection
             g.setColor(Color.red.darker());
             g.drawLine(0, y, bounds.width, y);
             // draw intensity curve for that band
             g.setColor(Color.white);
             int yOld = yBase;    
-            for ( int x = 0 ; x < analyser.getHistorySize() ; x++ )
+            for ( int x = 0 ; x < xSize ; x++ )
             {   
                 SpectrumInfo info = analyser.getSpectrumInfo(x);
                 if ( info == null ) break;
-                y = yBase - (int) (info.intensity[idx] * bounds.height / 6);
+                y = yBase - (int) (info.intensity[idx] * bounds.height / maxSI);
                 g.drawLine(x-1, yOld, x, y);
                 yOld = y;
             } 
