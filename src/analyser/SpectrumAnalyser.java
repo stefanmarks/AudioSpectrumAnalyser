@@ -277,16 +277,16 @@ public class SpectrumAnalyser implements AudioListener
                     history[featureIdx].features |= featureDetector.getFeature().getBitmask();
                 }
             }
+            
+            // move analysis window and history index forwards
+            historyIdx = (historyIdx + 1) % history.length;
+            dataIdx += dataIdxStep;
 
             // notify listeners
             for (Listener listener : listeners)
             {
                listener.analysisUpdated(this);
             }
-            
-            // move analysis window and history index forwards
-            historyIdx = (historyIdx + 1) % history.length;
-            dataIdx += dataIdxStep;
         } 
     }
   
