@@ -75,7 +75,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         
         setLocationRelativeTo(null);
         
-        openSoundFile(new File("data/Loop 02 - Amplifier - One Great Summer 10s.wav"));
+        //openSoundFile(new File("data/Loop 02 - Amplifier - One Great Summer 10s.wav"));
         //openSoundFile(new File("data/Sweep.wav"));
     }
 
