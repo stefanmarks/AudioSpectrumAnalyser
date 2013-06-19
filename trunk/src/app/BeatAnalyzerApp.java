@@ -25,11 +25,18 @@ import processing.core.PApplet;
  * 
  * @author Stefan Marks
  * @version 1.0 - 15.05.2013: Created
- * @version 1.2 - 15.06.2013: Added Preferences Dialog and Network logger
+ * @version 1.2 - 15.06.2013: Added preferences dialog and network logger
+ * @version 1.3 - 19.06.2013: Swapped Y axis for spectrum history
+ *                            Introduced different colour schemes
+ * 
+ * TODO: 
+ * - jpeg export
+ * - jpeg import
+ * 
  */
 public class BeatAnalyzerApp extends javax.swing.JFrame
 {
-    private static final String VERSION_NO = "1.2";
+    private static final String VERSION_NO = "1.3";
     
     /**
      * Creates new form BeatAnalyzerApp
@@ -75,7 +82,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         
         setLocationRelativeTo(null);
         
-        //openSoundFile(new File("data/Loop 02 - Amplifier - One Great Summer 10s.wav"));
+        openSoundFile(new File("data/Loop 02 - Amplifier - One Great Summer 10s.wav"));
         //openSoundFile(new File("data/Sweep.wav"));
     }
 
@@ -102,7 +109,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         // close old file first?
         closeSoundFile();
-        // ope new file
+        // open new file
         if ( file.exists() )
         {
             try
@@ -157,12 +164,15 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     {
         preferences.loadFileOutputSettings(fileOutput);
         preferences.loadNetworkOutputSettings(networkOutput);
+        preferences.setColourMap(renderFrequencyHistory.getColourMap());
     }
     
     private void applyPreferences()
     {
         preferences.applyFileOutputSettings(fileOutput);
         preferences.applyNetworkOutputSettings(networkOutput);
+        renderFrequencyHistory.setColourMap(preferences.getColourMap());
+        renderFrequencySpectrum.setColourMap(preferences.getColourMap());
     }
     
     /**

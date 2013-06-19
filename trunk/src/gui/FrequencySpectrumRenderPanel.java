@@ -34,6 +34,7 @@ public class FrequencySpectrumRenderPanel
         
         setBackground(Color.black);
         setForeground(Color.white);
+        setColourMap(FrequencyRainbowColourMap.INSTANCE);
         
         this.analyser = analyser;
         analyser.registerListener(this);
@@ -42,6 +43,26 @@ public class FrequencySpectrumRenderPanel
         enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
     }
 
+    /**
+     * Gets the colour map used for rendering the frequency spectrum.
+     * 
+     * @return the colour map used for rendering
+     */
+    public ColourMap getColourMap()
+    {
+        return colourMap;
+    }
+
+    /**
+     * Sets the colour map for rendering the frequency spectrum.
+     * 
+     * @param map  the new colour map used for rendering the spectrum 
+     */
+    public void setColourMap(ColourMap map)
+    {
+        colourMap = map;
+    }
+    
     @Override
     public void setBounds(int x, int y, int width, int height)
     {
@@ -85,7 +106,7 @@ public class FrequencySpectrumRenderPanel
             g.setStroke(strokeSignal);
             for ( int i = 0 ; i < spectrum.intensity.length ; i++ )
             {
-                // calculate rectangle fro full bar
+                // calculate rectangle for full bar
                 r.x      = i * xScale + 1;
                 r.width  = xScale - 2;
                 r.y      = 0;
@@ -99,7 +120,7 @@ public class FrequencySpectrumRenderPanel
                 float si = spectrum.intensity[i];
                 r.height = (int) (yScale * si / maxSI);
                 r.y = yPos - r.height;
-                g.setColor(RainbowColourMap.getColor(si, 0, maxSI));
+                g.setColor(colourMap.getColor(spectrum, i));
                 // draw bar
                 if ( selected ) 
                 {
@@ -123,7 +144,7 @@ public class FrequencySpectrumRenderPanel
     SpectrumAnalyser   analyser;
     private int        yPos, yScale, xScale;
     SpectrumInfo       spectrum;
+    ColourMap          colourMap;
     private Stroke     strokeCentreLine, strokeSignal;
-  
     
 }

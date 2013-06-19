@@ -25,6 +25,7 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         
         setBackground(Color.black);
         setForeground(Color.white);
+        colourMap = FrequencyRainbowColourMap.INSTANCE;
         
         this.analyser = analyser;
         analyser.registerListener(this);
@@ -32,7 +33,27 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         // enable mouse motion events to analyse signal when paused
         enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
     }
+    
+    /**
+     * Gets the colour map used for rendering the frequency spectrum.
+     * 
+     * @return the colour map used for rendering
+     */
+    public ColourMap getColourMap()
+    {
+        return colourMap;
+    }
 
+    /**
+     * Sets the colour map for rendering the frequency spectrum.
+     * 
+     * @param map  the new colour map used for rendering the spectrum 
+     */
+    public void setColourMap(ColourMap map)
+    {
+        colourMap = map;
+    }
+    
     @Override
     protected void processMouseMotionEvent(MouseEvent e)
     {
@@ -53,6 +74,8 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
                 
         Graphics2D g = (Graphics2D) graphics;
         Rectangle  bounds = getBounds();
+        int        height = bounds.height;
+        int        maxY   = height - 1;
         g.setColor(getBackground());
         g.fillRect(0, 0, bounds.width, bounds.height);
         
@@ -61,15 +84,16 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         // draw signal
         int xSize  = Math.min(bounds.width, analyser.getHistorySize());
         int ySteps = analyser.getSpectrumBandCount();
+        
         for ( int x = 0 ; x < xSize ; x++ )
         {   
             SpectrumInfo info = analyser.getSpectrumInfo(x);
             if ( info == null ) break;
             
-            for ( int i = 0; i < info.intensity.length; i++ )
+            for ( int i = 0; i < ySteps ; i++ )
             {
-                g.setColor(RainbowColourMap.getColor(info.intensity[i], 0, maxSI));
-                g.drawLine(x, i * bounds.height / info.intensity.length, x, getBounds().height);
+                g.setColor(colourMap.getColor(info, i));
+                g.drawLine(x, maxY - i * height / ySteps, x, maxY - (i+1) * height / ySteps);
             }
         }   
         
@@ -77,8 +101,8 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         Point mp = getMousePosition();
         if ( mp != null )
         {
-            int idx   = mp.y * ySteps / bounds.height;
-            int y     = (int) ((idx + 0.5f) * bounds.height / ySteps);
+            int idx   = (maxY - mp.y) * ySteps / bounds.height;
+            int y     = maxY - (int) ((idx + 0.5f) * bounds.height / ySteps);
             int yBase = bounds.height - 1;
             // draw red horizontal line for the band selection
             g.setColor(Color.red.darker());
@@ -97,5 +121,6 @@ public class FrequencySpectrumHistoryPanel extends JPanel implements SpectrumAna
         }        
     }
     
-    private SpectrumAnalyser analyser;    
+    private SpectrumAnalyser analyser;   
+    private ColourMap        colourMap;
 }
