@@ -2,8 +2,7 @@
 package gui;
 
 import java.awt.Frame;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
+import javax.swing.DefaultComboBoxModel;
 import output.FileSpectrumOutputModule;
 import output.NetworkSpectrumOutputModule;
 
@@ -15,6 +14,7 @@ import output.NetworkSpectrumOutputModule;
  */
 public class PreferencesDialog extends javax.swing.JDialog
 {
+
     public static enum UserChoice
     {
         CLOSE, CANCEL, ACCEPT;
@@ -29,7 +29,12 @@ public class PreferencesDialog extends javax.swing.JDialog
     public PreferencesDialog(Frame parent)
     {
         super(parent, true);
+        
+        cbxModelColourMap = new DefaultComboBoxModel(new ColourMap[] {
+            RainbowColourMap.INSTANCE, 
+            FrequencyRainbowColourMap.INSTANCE});
         initComponents();
+        
         pack();
         setLocationRelativeTo(parent);
     }
@@ -65,6 +70,16 @@ public class PreferencesDialog extends javax.swing.JDialog
         output.setTargetAddress(txtNetworkAddress.getText());
     }
     
+    public ColourMap getColourMap()
+    {
+        return (ColourMap) cbxColourMap.getSelectedItem();
+    }
+
+    public void setColourMap(ColourMap colourMap)
+    {
+        cbxColourMap.setSelectedItem(colourMap);
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -87,6 +102,9 @@ public class PreferencesDialog extends javax.swing.JDialog
         chkEnableNetworkOutput = new javax.swing.JCheckBox();
         javax.swing.JLabel lblNetworkAddress = new javax.swing.JLabel();
         txtNetworkAddress = new javax.swing.JTextField();
+        pnlColourMap = new javax.swing.JPanel();
+        javax.swing.JLabel lblColourMap = new javax.swing.JLabel();
+        cbxColourMap = new javax.swing.JComboBox();
         javax.swing.JPanel pnlButtons = new javax.swing.JPanel();
         javax.swing.JButton btnCancel = new javax.swing.JButton();
         btnAccept = new javax.swing.JButton();
@@ -172,6 +190,26 @@ public class PreferencesDialog extends javax.swing.JDialog
 
         panelTabs.addTab("Network Output", pnlNetworkOutput);
 
+        pnlColourMap.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        pnlColourMap.setLayout(new java.awt.GridBagLayout());
+
+        lblColourMap.setText("Colour Map:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 6);
+        pnlColourMap.add(lblColourMap, gridBagConstraints);
+
+        cbxColourMap.setModel(cbxModelColourMap);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        pnlColourMap.add(cbxColourMap, gridBagConstraints);
+
+        panelTabs.addTab("Colour Map", pnlColourMap);
+
         getContentPane().add(panelTabs, java.awt.BorderLayout.CENTER);
 
         pnlButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.TRAILING));
@@ -216,9 +254,11 @@ public class PreferencesDialog extends javax.swing.JDialog
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAccept;
+    private javax.swing.JComboBox cbxColourMap;
     private javax.swing.JCheckBox chkEnableLogfileOutput;
     private javax.swing.JCheckBox chkEnableNetworkOutput;
     private javax.swing.JTabbedPane panelTabs;
+    private javax.swing.JPanel pnlColourMap;
     private javax.swing.JPanel pnlFileOutput;
     private javax.swing.JPanel pnlNetworkOutput;
     private javax.swing.JTextField txtNetworkAddress;
@@ -226,4 +266,5 @@ public class PreferencesDialog extends javax.swing.JDialog
     // End of variables declaration//GEN-END:variables
 
     private UserChoice userChoice;
+    private DefaultComboBoxModel<ColourMap> cbxModelColourMap;
 }

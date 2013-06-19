@@ -1,5 +1,6 @@
 package gui;
 
+import analyser.SpectrumInfo;
 import java.awt.Color;
 
 /**
@@ -8,21 +9,30 @@ import java.awt.Color;
  * @author  Stefan Marks
  * @version 1.0 - 12.05.2013: Created
  */
-public class RainbowColourMap 
+public class RainbowColourMap implements ColourMap
 {
-    public static Color getColor(float value, float min, float max)
+    public static final RainbowColourMap INSTANCE = new RainbowColourMap();
+    
+    private RainbowColourMap()
+    {
+        map = null;
+    }
+    
+    @Override
+    public Color getColor(SpectrumInfo info, int frequencyIdx)
     {
         if ( map == null ) 
         {
             initColourMap();
         }
-        int idx = (int) ((value - min) / (max - min) * map.length);
+        float intensity = info.intensity[frequencyIdx];
+        int idx = (int) (intensity * map.length);
         if ( idx < 0           ) { idx = 0; }
         if ( idx >= map.length ) { idx = map.length - 1; }
         return map[idx];
     }
     
-    private static void initColourMap()
+    private void initColourMap()
     {
         map = new Color[256];
         for ( int i = 0 ; i < map.length ; i++ )
@@ -32,5 +42,11 @@ public class RainbowColourMap
         }
     }
         
-    private static Color[] map = null;    
+    @Override
+    public String toString()
+    {
+        return "Rainbow Colour Map";
+    }
+    
+    private Color[] map;    
 }
