@@ -2,36 +2,38 @@ package output;
 
 import analyser.SpectrumAnalyser;
 import analyser.SpectrumInfo;
+import com.illposed.osc.OSCMessage;
+import com.illposed.osc.OSCPortOut;
 import java.io.File;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * An output module that sends the spectrum data to a UDP receiver.
+ * An output module that sends the spectrum data via OSC.
  * 
  * @author Stefan Marks
  * @verison 1.0 - 21.05.2013: Created
+ * @version 1.1 - 20.06.2013: Converted to send OSC messages
  */
-public class NetworkSpectrumOutputModule implements OutputModule
+public class OscOutputModule implements OutputModule
 {
-    public NetworkSpectrumOutputModule(SpectrumAnalyser analyser)
+    public OscOutputModule(SpectrumAnalyser analyser)
     {
-        targetAddress = "127.0.0.1:8080";
-        enabled       = false;
-        outputSocket  = null;
-        outputPacket  = null;
+        targetAddress    = "127.0.0.1:8080";
+        oscTargetAddress = "/MightG/stringmessage";
+        enabled          = false;
+        outputPort       = null;
+        message          = null;
         analyser.registerListener(this);
     }
 
     @Override
     public String getName()
     {
-        String name = "Network Spectrum Output";
+        String name = "OSC Output";
         if ( targetAddress != null ) 
         {
             name += " (" + targetAddress + ")";
@@ -65,6 +67,16 @@ public class NetworkSpectrumOutputModule implements OutputModule
         targetAddress = address;
     }
     
+    public String getOscTargetAddress()
+    {
+        return oscTargetAddress;
+    }
+    
+    public void setOscTargetAddress(String address)
+    {
+        oscTargetAddress = address;
+    }
+    
     @Override
     public void audioFileOpened(File file)
     {
@@ -79,18 +91,18 @@ public class NetworkSpectrumOutputModule implements OutputModule
     
     private void ensureSocketIsOpen()
     {
-        if ( outputPacket == null )
+        if ( outputPort == null )
         {
             try
             {
                 String[] parts = targetAddress.split(":");                
                 InetSocketAddress target = new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
-                outputSocket = new DatagramSocket();
-                outputPacket = new DatagramPacket(new byte[1], 1, target);
+                outputPort = new OSCPortOut(target.getAddress(), target.getPort());
+                message    = new OSCMessage(oscTargetAddress);
             } 
             catch ( NumberFormatException | SocketException ex )
             {
-                Logger.getLogger(NetworkSpectrumOutputModule.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(OscOutputModule.class.getName()).log(Level.SEVERE, null, ex);
                 closeSocket();
                 enabled = false;
             } 
@@ -99,12 +111,12 @@ public class NetworkSpectrumOutputModule implements OutputModule
     
     private void closeSocket()
     {
-        if ( outputSocket != null )
+        if ( outputPort != null )
         {
-            outputSocket.close();
-            outputSocket = null;
+            outputPort.close();
+            outputPort = null;
         }
-        outputPacket = null;
+        message = null;
     }
     
     @Override
@@ -114,23 +126,22 @@ public class NetworkSpectrumOutputModule implements OutputModule
        
         ensureSocketIsOpen();
         
-        if ( outputPacket != null )
+        if ( outputPort != null )
         {
+            message.clearArguments();
             SpectrumInfo  info = analyser.getSpectrumInfo(0);
-            StringBuilder out  = new StringBuilder("stringmessage\n");
             for ( float f : info.intensity )
             {
-                out.append(String.format("%.3f\n", f));
+                message.addArgument(f);
             }
             
-            outputPacket.setData(out.toString().getBytes());
             try
             {
-                outputSocket.send(outputPacket);
+                outputPort.send(message);
             } 
             catch (IOException ex)
             {
-                Logger.getLogger(NetworkSpectrumOutputModule.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(OscOutputModule.class.getName()).log(Level.SEVERE, null, ex);
                 closeSocket();
                 enabled = false;
             }
@@ -138,8 +149,8 @@ public class NetworkSpectrumOutputModule implements OutputModule
     }
  
     private boolean        enabled;
-    private String         targetAddress;
-    private DatagramSocket outputSocket;
-    private DatagramPacket outputPacket;
+    private String         targetAddress, oscTargetAddress;
+    private OSCPortOut     outputPort;
+    private OSCMessage     message;
 
 }

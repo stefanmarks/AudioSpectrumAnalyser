@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import output.NetworkSpectrumOutputModule;
+import output.OscOutputModule;
 import output.OutputModule;
 import processing.core.PApplet;
 
@@ -50,7 +50,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         
         outputModules = new LinkedList<>();
         fileOutput    = new FileSpectrumOutputModule(analyser);
-        networkOutput = new NetworkSpectrumOutputModule(analyser);
+        networkOutput = new OscOutputModule(analyser);
         outputModules.add(fileOutput);
         outputModules.add(networkOutput);
         
@@ -163,14 +163,14 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     private void loadPreferences()
     {
         preferences.loadFileOutputSettings(fileOutput);
-        preferences.loadNetworkOutputSettings(networkOutput);
+        preferences.loadOscOutputSettings(networkOutput);
         preferences.setColourMap(renderFrequencyHistory.getColourMap());
     }
     
     private void applyPreferences()
     {
         preferences.applyFileOutputSettings(fileOutput);
-        preferences.applyNetworkOutputSettings(networkOutput);
+        preferences.applyOscOutputSettings(networkOutput);
         renderFrequencyHistory.setColourMap(preferences.getColourMap());
         renderFrequencySpectrum.setColourMap(preferences.getColourMap());
     }
@@ -387,7 +387,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     
     private List<OutputModule>            outputModules;
     private FileSpectrumOutputModule      fileOutput;
-    private NetworkSpectrumOutputModule   networkOutput;
+    private OscOutputModule   networkOutput;
     
     private PreferencesDialog             preferences;
     
