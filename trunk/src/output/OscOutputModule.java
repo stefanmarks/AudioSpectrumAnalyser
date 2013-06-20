@@ -2,6 +2,7 @@ package output;
 
 import analyser.SpectrumAnalyser;
 import analyser.SpectrumInfo;
+import com.illposed.osc.OSCBundle;
 import com.illposed.osc.OSCMessage;
 import com.illposed.osc.OSCPortOut;
 import java.io.File;
@@ -27,6 +28,7 @@ public class OscOutputModule implements OutputModule
         enabled          = false;
         outputPort       = null;
         message          = null;
+        bundle           = null;
         analyser.registerListener(this);
     }
 
@@ -99,6 +101,8 @@ public class OscOutputModule implements OutputModule
                 InetSocketAddress target = new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
                 outputPort = new OSCPortOut(target.getAddress(), target.getPort());
                 message    = new OSCMessage(oscTargetAddress);
+                bundle     = new OSCBundle();
+                bundle.addPacket(message);
             } 
             catch ( NumberFormatException | SocketException ex )
             {
@@ -137,7 +141,8 @@ public class OscOutputModule implements OutputModule
             
             try
             {
-                outputPort.send(message);
+                //outputPort.send(message);
+                outputPort.send(bundle); //  bundle consists of only one messsge
             } 
             catch (IOException ex)
             {
@@ -152,5 +157,6 @@ public class OscOutputModule implements OutputModule
     private String         targetAddress, oscTargetAddress;
     private OSCPortOut     outputPort;
     private OSCMessage     message;
+    private OSCBundle      bundle;
 
 }
