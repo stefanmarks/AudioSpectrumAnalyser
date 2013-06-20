@@ -27,7 +27,10 @@ public class UdpReceiver extends javax.swing.JFrame
 
     private void startListening()
     {
-        append("Starting Listener...\n");
+        synchronized(txtReceivedData)
+        {
+            append("Starting Listener...\n");
+        }
         receiverThread = new ReceiverThread();
         if ( (receiverThread != null) && receiverThread.isRunning() )
         {
@@ -37,7 +40,10 @@ public class UdpReceiver extends javax.swing.JFrame
     
     private void stopListening()
     {
-        append("Stopping Listener...\n");
+        synchronized(txtReceivedData)
+        {
+            append("Stopping Listener...\n");
+        }
         if ( receiverThread != null )
         {
             receiverThread.stopReceiving();
@@ -59,8 +65,7 @@ public class UdpReceiver extends javax.swing.JFrame
                 tlen -= nextLF + 1;
             }
         }
-        txtReceivedData.setCaretPosition(tlen);
-        
+        txtReceivedData.setCaretPosition(tlen);        
     }
         
 
@@ -73,16 +78,23 @@ public class UdpReceiver extends javax.swing.JFrame
             int port = (int) spnPort.getValue();
             try
             {
-                socket = new DatagramSocket(port);
+                socket = chkLocalhost.isSelected() ? 
+                            new DatagramSocket(port, InetAddress.getLoopbackAddress()) :
+                            new DatagramSocket(port, InetAddress.getLocalHost());
                 socket.setSoTimeout(100);
-                String localIP = InetAddress.getLocalHost().getHostAddress().toString();
+                String localIP = socket.getLocalAddress().toString();
                 append(String.format("Listening on UDP:%s:%d%n",
                     localIP, port));       
                 running = true;
             }
             catch ( SocketException | UnknownHostException ex )
             {
-                append("Error while opening socket: " + ex);
+                append("Error while opening socket: " + ex + "\n");
+                if ( socket != null )
+                {
+                    socket.close();
+                    socket = null;
+                }
             }
         }
         
@@ -100,8 +112,48 @@ public class UdpReceiver extends javax.swing.JFrame
                 try
                 {
                     socket.receive(receivePacket);
-                    String data = new String(receivePacket.getData());
-                    append("> \"" + data+ "\"\n");
+                    byte[] data  = receivePacket.getData();
+                    int    len   = receivePacket.getLength();
+
+                    synchronized(txtReceivedData)
+                    {
+                        append("Receiving data packet (" + len + " Bytes):\n");
+
+                        if ( btnHexText.isSelected() )
+                        {
+                            String ascii = "";
+                            for ( int i = 0 ; i < (len / 16 + 1) * 16 ; i++ )
+                            {
+                                if ( i % 16 == 0 )
+                                {
+                                    append(String.format("%04X:  ", i));
+                                    ascii = "";
+                                }
+
+                                if ( i < len ) 
+                                {
+                                    byte b = data[i];
+                                    append(String.format("%02X ", b));
+                                    ascii += ((b >= ' ') && (b <= '~')) ? (char) b : '.';
+                                }
+                                else
+                                {
+                                    append("   ");
+                                }
+
+                                if ( i % 16 == 15 )
+                                {
+                                    append("   " + ascii + '\n');
+                                    ascii = "";
+                                }                            
+                            }
+                        }
+                        else
+                        {
+                            String text = new String(data);
+                            append("\"" + text + "\"\n");
+                        }
+                    }
                 }
                 catch ( SocketTimeoutException ex )
                 {
@@ -109,7 +161,7 @@ public class UdpReceiver extends javax.swing.JFrame
                 }
                 catch ( IOException ex )
                 {
-                    append("Error while receiving: " + ex);
+                    append("Error while receiving: " + ex + "\n");
                     running = false;
                 }
             }
@@ -151,12 +203,13 @@ public class UdpReceiver extends javax.swing.JFrame
         pnlSettings = new javax.swing.JPanel();
         javax.swing.JLabel lblPort = new javax.swing.JLabel();
         spnPort = new javax.swing.JSpinner();
+        chkLocalhost = new javax.swing.JCheckBox();
         javax.swing.JPanel pnlSpacer = new javax.swing.JPanel();
         btnListen = new javax.swing.JToggleButton();
+        btnHexText = new javax.swing.JToggleButton();
         btnClear = new javax.swing.JButton();
         javax.swing.JPanel pnlOutput = new javax.swing.JPanel();
         javax.swing.JScrollPane scrlPane = new javax.swing.JScrollPane();
-        txtReceivedData = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("UDP Receiver");
@@ -182,21 +235,27 @@ public class UdpReceiver extends javax.swing.JFrame
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 0, 0);
         pnlSettings.add(spnPort, gridBagConstraints);
 
-        pnlSpacer.setPreferredSize(new java.awt.Dimension(10, 10));
+        chkLocalhost.setText("Localhost:");
+        chkLocalhost.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 0, 0);
+        pnlSettings.add(chkLocalhost, gridBagConstraints);
 
         javax.swing.GroupLayout pnlSpacerLayout = new javax.swing.GroupLayout(pnlSpacer);
         pnlSpacer.setLayout(pnlSpacerLayout);
         pnlSpacerLayout.setHorizontalGroup(
             pnlSpacerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 99, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         pnlSpacerLayout.setVerticalGroup(
             pnlSpacerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 10, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 1.0;
@@ -211,11 +270,24 @@ public class UdpReceiver extends javax.swing.JFrame
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         pnlSettings.add(btnListen, gridBagConstraints);
+
+        btnHexText.setText("Show Text");
+        btnHexText.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                btnHexTextActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 5;
+        gridBagConstraints.gridy = 0;
+        pnlSettings.add(btnHexText, gridBagConstraints);
 
         btnClear.setText("Clear");
         btnClear.addActionListener(new java.awt.event.ActionListener()
@@ -225,13 +297,17 @@ public class UdpReceiver extends javax.swing.JFrame
                 btnClearActionPerformed(evt);
             }
         });
-        pnlSettings.add(btnClear, new java.awt.GridBagConstraints());
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 0;
+        pnlSettings.add(btnClear, gridBagConstraints);
 
         getContentPane().add(pnlSettings, java.awt.BorderLayout.PAGE_START);
 
         pnlOutput.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         pnlOutput.setLayout(new java.awt.BorderLayout());
 
+        txtReceivedData.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         scrlPane.setViewportView(txtReceivedData);
 
         pnlOutput.add(scrlPane, java.awt.BorderLayout.CENTER);
@@ -258,6 +334,11 @@ public class UdpReceiver extends javax.swing.JFrame
         txtReceivedData.setText("");
     }//GEN-LAST:event_btnClearActionPerformed
 
+    private void btnHexTextActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnHexTextActionPerformed
+    {//GEN-HEADEREND:event_btnHexTextActionPerformed
+        btnHexText.setText(btnHexText.isSelected() ? "Show Hex" : "Show Text");
+    }//GEN-LAST:event_btnHexTextActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -276,10 +357,12 @@ public class UdpReceiver extends javax.swing.JFrame
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClear;
+    private javax.swing.JToggleButton btnHexText;
     private javax.swing.JToggleButton btnListen;
+    private javax.swing.JCheckBox chkLocalhost;
     private javax.swing.JPanel pnlSettings;
     private javax.swing.JSpinner spnPort;
-    private javax.swing.JTextArea txtReceivedData;
+    private final javax.swing.JTextArea txtReceivedData = new javax.swing.JTextArea();
     // End of variables declaration//GEN-END:variables
     
     private ReceiverThread receiverThread;

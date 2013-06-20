@@ -4,13 +4,14 @@ package gui;
 import java.awt.Frame;
 import javax.swing.DefaultComboBoxModel;
 import output.FileSpectrumOutputModule;
-import output.NetworkSpectrumOutputModule;
+import output.OscOutputModule;
 
 /**
  * Dialog for the settings of the Beat Analyser.
- * 
+ *
  * @author  Stefan Marks
  * @version 1.0 - 15.06.2013: Created
+ * @version 1.1 - 20.06.2013: Adapted to selectable colour maps and OSC output
  */
 public class PreferencesDialog extends javax.swing.JDialog
 {
@@ -19,33 +20,33 @@ public class PreferencesDialog extends javax.swing.JDialog
     {
         CLOSE, CANCEL, ACCEPT;
     }
-    
+
     /**
      * Creates a new preferences dialog.
-     * 
+     *
      * @param parent   the parent frame
      * @param settings the settings to represent
      */
     public PreferencesDialog(Frame parent)
     {
         super(parent, true);
-        
+
         cbxModelColourMap = new DefaultComboBoxModel(new ColourMap[] {
-            RainbowColourMap.INSTANCE, 
+            RainbowColourMap.INSTANCE,
             FrequencyRainbowColourMap.INSTANCE});
         initComponents();
-        
+
         pack();
         setLocationRelativeTo(parent);
     }
-    
+
     public UserChoice showDialog()
     {
         userChoice = UserChoice.CLOSE;
         setVisible(true);
         return userChoice;
     }
-    
+
     public void loadFileOutputSettings(FileSpectrumOutputModule output)
     {
         chkEnableLogfileOutput.setSelected(output.isEnabled());
@@ -57,19 +58,21 @@ public class PreferencesDialog extends javax.swing.JDialog
         output.setEnabled(chkEnableLogfileOutput.isSelected());
         output.setOutputFilename(txtOutputFilename.getText());
     }
-    
-    public void loadNetworkOutputSettings(NetworkSpectrumOutputModule output)
+
+    public void loadOscOutputSettings(OscOutputModule output)
     {
-        chkEnableNetworkOutput.setSelected(output.isEnabled());
+        chkEnableOscOutput.setSelected(output.isEnabled());
         txtNetworkAddress.setText(output.getTargetAddress());
+        txtOscAddress.setText(output.getOscTargetAddress());
     }
 
-    public void applyNetworkOutputSettings(NetworkSpectrumOutputModule output)
+    public void applyOscOutputSettings(OscOutputModule output)
     {
-        output.setEnabled(chkEnableNetworkOutput.isSelected());
+        output.setEnabled(chkEnableOscOutput.isSelected());
         output.setTargetAddress(txtNetworkAddress.getText());
+        output.setOscTargetAddress(txtOscAddress.getText());
     }
-    
+
     public ColourMap getColourMap()
     {
         return (ColourMap) cbxColourMap.getSelectedItem();
@@ -79,7 +82,7 @@ public class PreferencesDialog extends javax.swing.JDialog
     {
         cbxColourMap.setSelectedItem(colourMap);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -97,11 +100,13 @@ public class PreferencesDialog extends javax.swing.JDialog
         chkEnableLogfileOutput = new javax.swing.JCheckBox();
         javax.swing.JLabel lblOutputFilename = new javax.swing.JLabel();
         txtOutputFilename = new javax.swing.JTextField();
-        pnlNetworkOutput = new javax.swing.JPanel();
-        javax.swing.JLabel lblEnableNetworkOutput = new javax.swing.JLabel();
-        chkEnableNetworkOutput = new javax.swing.JCheckBox();
+        pnlOscOutput = new javax.swing.JPanel();
+        javax.swing.JLabel lblEnableOscOutput = new javax.swing.JLabel();
+        chkEnableOscOutput = new javax.swing.JCheckBox();
         javax.swing.JLabel lblNetworkAddress = new javax.swing.JLabel();
         txtNetworkAddress = new javax.swing.JTextField();
+        javax.swing.JLabel lblOscAddress = new javax.swing.JLabel();
+        txtOscAddress = new javax.swing.JTextField();
         pnlColourMap = new javax.swing.JPanel();
         javax.swing.JLabel lblColourMap = new javax.swing.JLabel();
         cbxColourMap = new javax.swing.JComboBox();
@@ -153,42 +158,57 @@ public class PreferencesDialog extends javax.swing.JDialog
 
         panelTabs.addTab("File Output", pnlFileOutput);
 
-        pnlNetworkOutput.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        pnlNetworkOutput.setLayout(new java.awt.GridBagLayout());
+        pnlOscOutput.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        pnlOscOutput.setLayout(new java.awt.GridBagLayout());
 
-        lblEnableNetworkOutput.setText("Enable Network Output:");
+        lblEnableOscOutput.setText("Enable OSC Output:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 6);
-        pnlNetworkOutput.add(lblEnableNetworkOutput, gridBagConstraints);
+        pnlOscOutput.add(lblEnableOscOutput, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.weightx = 1.0;
-        pnlNetworkOutput.add(chkEnableNetworkOutput, gridBagConstraints);
+        pnlOscOutput.add(chkEnableOscOutput, gridBagConstraints);
 
         lblNetworkAddress.setText("Target Address/Port:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 0, 6);
-        pnlNetworkOutput.add(lblNetworkAddress, gridBagConstraints);
+        pnlOscOutput.add(lblNetworkAddress, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 0, 0);
-        pnlNetworkOutput.add(txtNetworkAddress, gridBagConstraints);
+        pnlOscOutput.add(txtNetworkAddress, gridBagConstraints);
 
-        panelTabs.addTab("Network Output", pnlNetworkOutput);
+        lblOscAddress.setText("OSC Target Address:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(6, 0, 0, 6);
+        pnlOscOutput.add(lblOscAddress, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(7, 0, 0, 0);
+        pnlOscOutput.add(txtOscAddress, gridBagConstraints);
+
+        panelTabs.addTab("OSC Output", pnlOscOutput);
 
         pnlColourMap.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         pnlColourMap.setLayout(new java.awt.GridBagLayout());
@@ -256,12 +276,13 @@ public class PreferencesDialog extends javax.swing.JDialog
     private javax.swing.JButton btnAccept;
     private javax.swing.JComboBox cbxColourMap;
     private javax.swing.JCheckBox chkEnableLogfileOutput;
-    private javax.swing.JCheckBox chkEnableNetworkOutput;
+    private javax.swing.JCheckBox chkEnableOscOutput;
     private javax.swing.JTabbedPane panelTabs;
     private javax.swing.JPanel pnlColourMap;
     private javax.swing.JPanel pnlFileOutput;
-    private javax.swing.JPanel pnlNetworkOutput;
+    private javax.swing.JPanel pnlOscOutput;
     private javax.swing.JTextField txtNetworkAddress;
+    private javax.swing.JTextField txtOscAddress;
     private javax.swing.JTextField txtOutputFilename;
     // End of variables declaration//GEN-END:variables
 
