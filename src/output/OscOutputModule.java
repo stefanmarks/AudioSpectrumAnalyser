@@ -67,6 +67,7 @@ public class OscOutputModule implements OutputModule
     public void setTargetAddress(String address)
     {
         targetAddress = address;
+        closeSocket(); // to force update of the value
     }
     
     public String getOscTargetAddress()
@@ -77,6 +78,7 @@ public class OscOutputModule implements OutputModule
     public void setOscTargetAddress(String address)
     {
         oscTargetAddress = address;
+        closeSocket(); // to force update of the value
     }
     
     @Override
