@@ -23,12 +23,15 @@ public class OscOutputModule implements OutputModule
 {
     public OscOutputModule(SpectrumAnalyser analyser)
     {
-        targetAddress    = "127.0.0.1:8080";
+        targetAddress    = "127.0.0.1:8989";
         oscTargetAddress = "/MightG/stringmessage";
         enabled          = false;
-        outputPort       = null;
-        message          = null;
-        bundle           = null;
+        outputPort1       = null;
+        message1          = null;
+        bundle1           = null;
+        outputPort2       = null;
+        message2          = null;
+        bundle2           = null;
         analyser.registerListener(this);
     }
 
@@ -95,16 +98,22 @@ public class OscOutputModule implements OutputModule
     
     private void ensureSocketIsOpen()
     {
-        if ( outputPort == null )
+        if ( outputPort1 == null )
         {
             try
             {
                 String[] parts = targetAddress.split(":");                
+                // frequency spectrum on the target port
                 InetSocketAddress target = new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
-                outputPort = new OSCPortOut(target.getAddress(), target.getPort());
-                message    = new OSCMessage(oscTargetAddress);
-                bundle     = new OSCBundle();
-                bundle.addPacket(message);
+                outputPort1 = new OSCPortOut(target.getAddress(), target.getPort());
+                message1    = new OSCMessage(oscTargetAddress);
+                bundle1     = new OSCBundle();
+                bundle1.addPacket(message1);
+                // playback progress on the next port 
+                outputPort2 = new OSCPortOut(target.getAddress(), target.getPort() + 1);
+                message2    = new OSCMessage(oscTargetAddress);
+                bundle2     = new OSCBundle();
+                bundle2.addPacket(message2);
             } 
             catch ( NumberFormatException | SocketException ex )
             {
@@ -117,12 +126,18 @@ public class OscOutputModule implements OutputModule
     
     private void closeSocket()
     {
-        if ( outputPort != null )
+        if ( outputPort1 != null )
         {
-            outputPort.close();
-            outputPort = null;
+            outputPort1.close();
+            outputPort1 = null;
         }
-        message = null;
+        if ( outputPort2 != null )
+        {
+            outputPort2.close();
+            outputPort2 = null;
+        }
+        message1 = null;
+        message2 = null;
     }
     
     @Override
@@ -132,19 +147,35 @@ public class OscOutputModule implements OutputModule
        
         ensureSocketIsOpen();
         
-        if ( outputPort != null )
+        if ( outputPort1 != null )
         {
-            message.clearArguments();
+            message1.clearArguments();
             SpectrumInfo  info = analyser.getSpectrumInfo(0);
             for ( float f : info.intensity )
             {
-                message.addArgument(f);
+                message1.addArgument(f);
             }
             
             try
             {
-                //outputPort.send(message);
-                outputPort.send(bundle); //  bundle consists of only one messsge
+                outputPort1.send(bundle1); //  bundle consists of only one messsge
+            } 
+            catch (IOException ex)
+            {
+                Logger.getLogger(OscOutputModule.class.getName()).log(Level.SEVERE, null, ex);
+                closeSocket();
+                enabled = false;
+            }
+        }
+        
+        if ( outputPort2 != null )
+        {
+            message2.clearArguments();
+            message2.addArgument(analyser.getSpectrumInfo(0).position);
+            
+            try
+            {
+                outputPort2.send(bundle2); //  bundle consists of only one messsge
             } 
             catch (IOException ex)
             {
@@ -157,8 +188,8 @@ public class OscOutputModule implements OutputModule
  
     private boolean        enabled;
     private String         targetAddress, oscTargetAddress;
-    private OSCPortOut     outputPort;
-    private OSCMessage     message;
-    private OSCBundle      bundle;
+    private OSCPortOut     outputPort1, outputPort2;
+    private OSCMessage     message1, message2;
+    private OSCBundle      bundle1, bundle2;
 
 }
