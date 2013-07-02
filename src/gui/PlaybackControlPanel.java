@@ -5,7 +5,6 @@ import ddf.minim.AudioPlayer;
 import ddf.minim.Playable;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.TimerTask;
 import java.util.Timer;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;

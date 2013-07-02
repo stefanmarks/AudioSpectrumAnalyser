@@ -24,10 +24,11 @@ public class SpectrumInfo
     /**
      * Copies spectrum analysis data from an FFT analyser.
      * 
-     * @param pos      the position in the audio file
+     * @param posIdx   the position in ms in the audio file
+     * @param posRel   the relative position in the audio file
      * @param analyser the spectrum analyser
      */
-    public void copySpectrumData(int pos, SpectrumAnalyser analyser)
+    public void copySpectrumData(int posIdx, float posRel, SpectrumAnalyser analyser)
     {
         FFT fft          = analyser.getFFT();
         int spectrumSize = fft.avgSize();
@@ -38,7 +39,8 @@ public class SpectrumInfo
             intensityRaw = new float[fft.specSize()];
         }
         
-        sampleIdx = pos;
+        sampleIdx = posIdx;
+        position  = posRel;
         features  = 0;
         
         SpectrumShaper shaper = analyser.getSpectrumShaper();
@@ -89,6 +91,8 @@ public class SpectrumInfo
     
     // millisecond index into the sound file
     public int     sampleIdx;
+    // relative play position of the soudn file
+    public float   position;
     // array of frequency intensities
     public float[] intensity;
     // array of frequency intensities 

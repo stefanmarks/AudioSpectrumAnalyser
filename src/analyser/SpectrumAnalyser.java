@@ -257,9 +257,10 @@ public class SpectrumAnalyser implements AudioListener
             synchronized(history)
             {      
                 // calculate analysis offset to current playback position
-                int posOffset = (int) ((dataRawL.length - dataIdx) / audioSource.sampleRate() * 1000);
-                int pos       = playable.position() - posOffset;
-                history[historyIdx].copySpectrumData(pos, this);
+                int   posOffset = (int) ((dataRawL.length - dataIdx) / audioSource.sampleRate() * 1000);
+                int   posIdx    = playable.position() - posOffset;
+                float posRel    = (float) posIdx / (float) playable.length();
+                history[historyIdx].copySpectrumData(posIdx, posRel, this);
             }
 
             // run feature detectors

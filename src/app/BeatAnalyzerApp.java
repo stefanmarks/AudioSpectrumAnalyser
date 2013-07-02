@@ -76,6 +76,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         PApplet p = new PApplet();
         minim = new Minim(p);
         sound = null;
+        prevAudioPath = null;
      
         preferences = new PreferencesDialog(this);
         loadPreferences();
@@ -91,11 +92,12 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
      */
     private void selectSoundFile()
     {
-        JFileChooser jfc = new JFileChooser(".");
+        JFileChooser jfc = new JFileChooser(prevAudioPath);
         int choice = jfc.showOpenDialog(this);
         if ( choice == JFileChooser.APPROVE_OPTION )
         {
             File file = jfc.getSelectedFile();
+            prevAudioPath = file.getParentFile();
             openSoundFile(file);
         }
     }
@@ -384,10 +386,11 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     private Minim                 minim;
     private AudioPlayer           sound;
     private SpectrumAnalyser      analyser;
+    private File                  prevAudioPath;
     
     private List<OutputModule>            outputModules;
     private FileSpectrumOutputModule      fileOutput;
-    private OscOutputModule   networkOutput;
+    private OscOutputModule               networkOutput;
     
     private PreferencesDialog             preferences;
     
