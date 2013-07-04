@@ -31,7 +31,7 @@ public class PreferencesDialog extends javax.swing.JDialog
     {
         super(parent, true);
 
-        cbxModelColourMap = new DefaultComboBoxModel(new ColourMap[] {
+        cbxModelColourMap = new DefaultComboBoxModel<ColourMap>(new ColourMap[] {
             RainbowColourMap.INSTANCE,
             FrequencyRainbowColourMap.INSTANCE});
         initComponents();
