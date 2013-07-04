@@ -55,7 +55,7 @@ public class PlaybackControlPanel
         sldTime.setMajorTickSpacing(majTicks[idx] * STEPS_PER_SECOND);
         sldTime.setMinorTickSpacing(minTicks[idx] * STEPS_PER_SECOND);
         int l = 0;
-        Dictionary<Integer, JComponent> labels = new Hashtable<>();
+        Dictionary<Integer, JComponent> labels = new Hashtable<Integer, JComponent>();
         while ( l < len )
         {
             String  label = String.format("%d:%02d", (int) (l/(1000*60)), (l / 1000) % 60);

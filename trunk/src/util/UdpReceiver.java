@@ -75,7 +75,7 @@ public class UdpReceiver extends javax.swing.JFrame
         {
             running = false;
             receiveBuffer = new byte[2048];
-            int port = (int) spnPort.getValue();
+            int port = (Integer) spnPort.getValue();
             try
             {
                 socket = chkLocalhost.isSelected() ? 
@@ -87,7 +87,7 @@ public class UdpReceiver extends javax.swing.JFrame
                     localIP, port));       
                 running = true;
             }
-            catch ( SocketException | UnknownHostException ex )
+            catch ( Exception ex )
             {
                 append("Error while opening socket: " + ex + "\n");
                 if ( socket != null )

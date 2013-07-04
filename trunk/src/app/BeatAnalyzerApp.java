@@ -48,7 +48,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         
         analyser      = new SpectrumAnalyser(200, 2048);
         
-        outputModules = new LinkedList<>();
+        outputModules = new LinkedList<OutputModule>();
         fileOutput    = new FileSpectrumOutputModule(analyser);
         networkOutput = new OscOutputModule(analyser);
         outputModules.add(fileOutput);

@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 public class SpectrumAnalyser implements AudioListener
 {
     /**
-     * Listener class for notifications when a new sampkle has been analysed.
+     * Listener class for notifications when a new sample has been analysed.
      */
     public interface Listener
     {
@@ -50,8 +50,8 @@ public class SpectrumAnalyser implements AudioListener
         }
         historyIdx = 0;
         
-        featureDetectors = new HashSet<>();
-        listeners = new HashSet<>();
+        featureDetectors = new HashSet<FeatureDetector>();        
+        listeners = new HashSet<Listener>();
     }
     
     /**
@@ -166,7 +166,7 @@ public class SpectrumAnalyser implements AudioListener
      */
     public List<Feature> getDetectedFeatures()
     {
-        List<Feature> features = new LinkedList<>();
+        List<Feature> features = new LinkedList<Feature>();
         for ( FeatureDetector fd : featureDetectors )
         {
             features.add(fd.getFeature());
