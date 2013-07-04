@@ -115,7 +115,7 @@ public class OscOutputModule implements OutputModule
                 bundle2     = new OSCBundle();
                 bundle2.addPacket(message2);
             } 
-            catch ( NumberFormatException | SocketException ex )
+            catch ( Exception ex )
             {
                 Logger.getLogger(OscOutputModule.class.getName()).log(Level.SEVERE, null, ex);
                 closeSocket();

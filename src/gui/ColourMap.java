@@ -12,7 +12,7 @@ import java.awt.Color;
 public interface ColourMap 
 {
     /**
-     * REturns a colour to render the specific intensity of the specific frequency.
+     * Returns a colour to render the specific intensity of the specific frequency.
      * 
      * @param info   the frequency spectrum to get the colour for
      * @param value  the frequency index to get the colour for
