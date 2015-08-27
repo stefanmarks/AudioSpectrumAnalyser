@@ -73,8 +73,11 @@ public class PlaybackControlPanel
      */
     public void detachFromAudio()
     {
-        ((AudioPlayer) source).removeListener(this);
-        this.source = null;
+        if ( source != null )
+        {
+            ((AudioPlayer) source).removeListener(this);
+            source = null;
+        }
         updateControls();
         sldTime.setValue(0);
         lblTimecode.setText("----.---");
@@ -234,7 +237,7 @@ public class PlaybackControlPanel
                 pos / 1000, pos % 1000));
         updateFromPlayback = false;
 
-        if ( source.position() == source.length() )
+        if ( source.position() >= source.length() - 1 )
         {
             // end of song reached
             if ( isLooping() )

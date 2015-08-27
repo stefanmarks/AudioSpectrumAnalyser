@@ -199,7 +199,7 @@ public class SpectrumAnalyser implements AudioListener
     /**
      * Registers a new analysis result listener.
      * 
-     * @param fd  the analysis result listener to register.
+     * @param l  the analysis result listener to register.
      * @return <code>true</code> if the analysis result listener was successfully registered,
      *         <code>false</code> if not
      */
@@ -211,7 +211,7 @@ public class SpectrumAnalyser implements AudioListener
     /**
      * Unregisters an analysis result listener.
      * 
-     * @param fd  the analysis result listener to un register.
+     * @param l  the analysis result listener to un register.
      * @return <code>true</code> if the analysis result listener was successfully unregistered,
      *         <code>false</code> if not
      */
@@ -229,9 +229,14 @@ public class SpectrumAnalyser implements AudioListener
     @Override
     public void samples(float[] sampL, float[] sampR)
     {
-        if ( audioSource == null ) return;
-        Playable playable = (Playable) audioSource;
-        if ( !playable.isPlaying() ) return;
+        if ( audioSource == null || fft == null ) return;
+        
+        Playable playable = null;
+        if ( audioSource instanceof Playable )
+        {
+            playable = (Playable) audioSource;
+            if ( !playable.isPlaying() ) return;
+        }
         
         // shift data in input arrays
         System.arraycopy(dataRawL, sampL.length, dataRawL, 0, dataRawL.length - sampL.length);
@@ -258,8 +263,8 @@ public class SpectrumAnalyser implements AudioListener
             {      
                 // calculate analysis offset to current playback position
                 int   posOffset = (int) ((dataRawL.length - dataIdx) / audioSource.sampleRate() * 1000);
-                int   posIdx    = playable.position() - posOffset;
-                float posRel    = (float) posIdx / (float) playable.length();
+                int   posIdx    = (playable != null) ? playable.position() - posOffset : 0;
+                float posRel    = (playable != null) ? (float) posIdx / (float) playable.length() : 0;
                 history[historyIdx].copySpectrumData(posIdx, posRel, this);
             }
 
@@ -377,11 +382,12 @@ public class SpectrumAnalyser implements AudioListener
     private int                  dataIdx, dataIdxStep;
     private FFT                  fft;
     private SpectrumShaper       shaper;
-    private int                  analyseFrequency;
+    private final int            analyseFrequency;
     private final SpectrumInfo[] history;
     private int                  historyIdx;
-    private Set<FeatureDetector> featureDetectors;
-    private Set<Listener>        listeners;
+    
+    private final Set<FeatureDetector> featureDetectors;
+    private final Set<Listener>        listeners;
 
     private static final Logger LOG = Logger.getLogger(SpectrumAnalyser.class.getName());
 }

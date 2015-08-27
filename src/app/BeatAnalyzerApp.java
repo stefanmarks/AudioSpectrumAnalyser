@@ -44,11 +44,11 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     public BeatAnalyzerApp()
     {
         initComponents();
-        setTitle("Beat Analyser v" + VERSION_NO);
+        setTitle("Audio Spectrum Analyser v" + VERSION_NO);
         
-        analyser      = new SpectrumAnalyser(200, 2048);
+        analyser = new SpectrumAnalyser(200, 2048);
         
-        outputModules = new LinkedList<OutputModule>();
+        outputModules = new LinkedList<>();
         fileOutput    = new FileSpectrumOutputModule(analyser);
         networkOutput = new OscOutputModule(analyser);
         outputModules.add(fileOutput);
@@ -76,6 +76,9 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         PApplet p = new PApplet();
         minim = new Minim(p);
         sound = null;
+        lineIn  = minim.getLineIn();
+        lineIn.mute();
+        
         prevAudioPath = null;
      
         preferences = new PreferencesDialog(this);
@@ -87,6 +90,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         //openSoundFile(new File("data/Sweep.wav"));
     }
 
+    
     /**
      * Opens the file selection dialog for reading a sound file.
      */
@@ -101,6 +105,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
             openSoundFile(file);
         }
     }
+    
     
     /**
      * Starts reading and analysing a sound file.
@@ -117,9 +122,11 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
             try
             {
                 sound = minim.loadFile(file.getAbsolutePath());
-            
                 analyser.attachToAudio(sound);
-                playbackControl.attachToAudio(sound);
+                if ( sound instanceof Playable )
+                {
+                    playbackControl.attachToAudio((Playable) sound);
+                }
 
                 for ( OutputModule outputModule : outputModules )
                 {
@@ -140,6 +147,35 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         }
     }
     
+    
+    /**
+     * Starts reading and analysing live input
+     * 
+     * @param 
+     */
+    private void openLiveInput()
+    {
+        // close old file first?
+        closeSoundFile();
+        
+        try
+        {
+            sound = lineIn;
+            analyser.attachToAudio(sound);
+            loadPreferences();
+            menuFileClose.setEnabled(true);
+        }
+        catch (Exception e)
+        {
+            JOptionPane.showMessageDialog(
+                this, 
+                "Could not open Line Input!",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    
     /**
      * Closes the active sound file.
      */
@@ -155,12 +191,16 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
                 outputModule.audioFileClosed();
             }                    
             
-            sound.close();
+            if ( sound instanceof Playable ) 
+            {
+                sound.close();
+            }
             sound = null;
             
             menuFileClose.setEnabled(false);
         }
     }
+    
     
     private void loadPreferences()
     {
@@ -168,6 +208,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         preferences.loadOscOutputSettings(networkOutput);
         preferences.setColourMap(renderFrequencyHistory.getColourMap());
     }
+    
     
     private void applyPreferences()
     {
@@ -194,6 +235,7 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         pnlPlaybackControls = new javax.swing.JPanel();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu menuFile = new javax.swing.JMenu();
+        javax.swing.JMenuItem menuLiveInput = new javax.swing.JMenuItem();
         javax.swing.JMenuItem menuFileOpen = new javax.swing.JMenuItem();
         menuFileClose = new javax.swing.JMenuItem();
         javax.swing.JMenuItem menuFileQuit = new javax.swing.JMenuItem();
@@ -249,6 +291,17 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         getContentPane().add(pnlPlaybackControls, gridBagConstraints);
 
         menuFile.setText("File");
+
+        menuLiveInput.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_MASK));
+        menuLiveInput.setText("Open Live Input");
+        menuLiveInput.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                menuOpenLiveInput(evt);
+            }
+        });
+        menuFile.add(menuLiveInput);
 
         menuFileOpen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         menuFileOpen.setText("Open File");
@@ -319,11 +372,13 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
     private void openSoundFile(java.awt.event.ActionEvent evt)//GEN-FIRST:event_openSoundFile
     {//GEN-HEADEREND:event_openSoundFile
         selectSoundFile();
     }//GEN-LAST:event_openSoundFile
 
+    
     private void menuQuitActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuQuitActionPerformed
     {//GEN-HEADEREND:event_menuQuitActionPerformed
         this.dispose();
@@ -331,15 +386,17 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         System.exit(0);
     }//GEN-LAST:event_menuQuitActionPerformed
 
+    
     private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuHelpAboutActionPerformed
     {//GEN-HEADEREND:event_menuHelpAboutActionPerformed
          JOptionPane.showMessageDialog(
             this,
-            "Smart Beat Detector v" + VERSION_NO + "\n\n" +
-            "(C) 2013 by Stefan Marks\n" + 
+            "Audio Spectrum Analyser v" + VERSION_NO + "\n\n" +
+            "(C) 2013-2015 by Stefan Marks\n" + 
             "Auckland University of Technology, New Zealand");
     }//GEN-LAST:event_menuHelpAboutActionPerformed
 
+    
     private void menuSettings_PreferencesActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuSettings_PreferencesActionPerformed
     {//GEN-HEADEREND:event_menuSettings_PreferencesActionPerformed
         PreferencesDialog.UserChoice choice = preferences.showDialog();
@@ -353,11 +410,19 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
         }
     }//GEN-LAST:event_menuSettings_PreferencesActionPerformed
 
+    
     private void menuFileCloseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileCloseActionPerformed
     {//GEN-HEADEREND:event_menuFileCloseActionPerformed
         closeSoundFile();
     }//GEN-LAST:event_menuFileCloseActionPerformed
 
+    
+    private void menuOpenLiveInput(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuOpenLiveInput
+    {//GEN-HEADEREND:event_menuOpenLiveInput
+        openLiveInput();
+    }//GEN-LAST:event_menuOpenLiveInput
+
+    
     /**
      * @param args the command line arguments
      */
@@ -383,20 +448,21 @@ public class BeatAnalyzerApp extends javax.swing.JFrame
     private javax.swing.JPanel pnlWaveform;
     // End of variables declaration//GEN-END:variables
 
-    private Minim                 minim;
-    private AudioPlayer           sound;
-    private SpectrumAnalyser      analyser;
-    private File                  prevAudioPath;
+    private final Minim                 minim;
+    private       AudioSource           sound;
+    private final AudioInput            lineIn;
+    private final SpectrumAnalyser      analyser;
+    private       File                  prevAudioPath;
     
-    private List<OutputModule>            outputModules;
-    private FileSpectrumOutputModule      fileOutput;
-    private OscOutputModule               networkOutput;
+    private final List<OutputModule>            outputModules;
+    private final FileSpectrumOutputModule      fileOutput;
+    private final OscOutputModule               networkOutput;
     
-    private PreferencesDialog             preferences;
+    private final PreferencesDialog             preferences;
     
-    private WaveformRenderPanel           renderWaveform;
-    private FrequencySpectrumRenderPanel  renderFrequencySpectrum;
-    private FeatureHistoryRenderPanel     renderFeatureHistory;
-    private FrequencySpectrumHistoryPanel renderFrequencyHistory;
-    private PlaybackControlPanel          playbackControl;
+    private final WaveformRenderPanel           renderWaveform;
+    private final FrequencySpectrumRenderPanel  renderFrequencySpectrum;
+    private final FeatureHistoryRenderPanel     renderFeatureHistory;
+    private final FrequencySpectrumHistoryPanel renderFrequencyHistory;
+    private final PlaybackControlPanel          playbackControl;
 }
