@@ -1,0 +1,1 @@
+This program reads an audio file (wav, mp3, etc.) and creates a beatmap with features like the main beat, snare, high hat, etc.
